@@ -144,12 +144,12 @@ menuPedidos: 	la $t0, opcaoPedido	#Carrega o menu de Pedidos
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Chamar janela de string--------------------------------------------------------------------------
-chamarJanelaString: 	addi $v0, $zero, 54
-			la $a0, ($t2)
-			la $a1, ($t3)
-			add $a2, $zero, $t4
-			syscall
-			jr $ra
+chamarJanelaString: 	addi $v0, $zero, 54	#Escolhe a janela de dialogo de string
+			la $a0, ($t2)		#Carrega a label que vai ser exibida
+			la $a1, ($t3)		#Carrega a label onde a string vai ser armazenada
+			add $a2, $zero, $t4	#Quantidade máxima de caracteres permitida
+			syscall			#Chamada da syscall
+			jr $ra			#Retorno ao fluxo do programa
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -165,20 +165,16 @@ acaoPrato:	beq $t3, 1, funcaoCadastrarPrato	#Chamada da função de cadastro de pr
 
 
 #-------------------------------------------------Cadastrar Prato----------------------------------------------------------------------------------
-funcaoCadastrarPrato: 	la $t2, digiteNomePrato
-			la $t3, nomePrato
-			addi $t4, $zero, 10
-			jal chamarJanelaString
-			jal verificacaoString
-			la $a0, digitePrecoPrato
-			addi $v0, $zero, 53
-			syscall
-			bgt $a1, 0, dadosInvalidos
-			j exit
-			
-			
-			
-			
+funcaoCadastrarPrato: 	la $t2, digiteNomePrato		#Carrega a label do nome do prato
+			la $t3, nomePrato		#Carrega a label que vai armazenar o nome do prato
+			addi $t4, $zero, 10		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			la $a0, digitePrecoPrato	#Carrega a label do preco do prato
+			addi $v0, $zero, 53		#Seleciona a tela de chamada para armazenamento de double
+			syscall				#Chamada da syscall :)
+			bgt $a1, 0, dadosInvalidos	#Verifica se o número passado é valido
+			j exit				
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Remover Prato----------------------------------------------------------------------------------
@@ -206,7 +202,7 @@ retornaMain:
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-ok: jr $ra
+ok: jr $ra	#Temporário!
 
 exit: nop
 	
