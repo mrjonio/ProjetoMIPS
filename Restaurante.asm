@@ -7,10 +7,16 @@
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
 	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Visualizar um pedido \n 5 - Gerar lista de pedidos em determinado período de tempo \n 6 - Calcular Lucro dos pedidos em determinado período de tempo \n 7 - Completar pedido \n 8 - Retornar para o Menu Principal"
+	
+	nome: .asciiz "Nome do cliente: \n"
+	cpf: .asciiz "CPF do cliente:: \n"
+	preferencia: .asciiz "Preferencia do cliente: \n"
+	
+	limite: .space 50
 .text
 Main:
 #----------------------------------Menu Principal---------------------------------------------------------------------------------------------------
-	la $t0, titulo 		#Carrega o menu
+	la $a0, titulo 		#Carrega o menu
 	jal escolha		#Função para mostrar o menu e escolher a opção [ escolha(titulo) ]
 	addi $t1, $t1, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
 	addi $t2, $zero, 5	#Parâmetro pra saber se a opção escolhida é menor ou igual a 5
@@ -20,10 +26,9 @@ Main:
 	j exit			#Fim da execução
 	
 #------------------------------Função de seleçãod e menu escolha(string texto) return int escolhido---------------------------------------------------	
-escolha: 	addi $v0, $zero, 51	#Configurando a syscall para lançar tela de escolha
-		la $a0, ($t0)		#Carregando o "texto" da tela de escolha
-	 	syscall			#Syscall da tela
-	 	jr $ra			#Fim da função
+escolha: 	addi $v0, $zero, 51		#Carregando o "texto" da tela de escolha
+	 	syscall				#Syscall da tela
+	 	jr $ra				#Fim da função
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-----------------------------------------------Printf		[void printf(String texto)]	----------------------------------------------------------------------------------------------
@@ -59,15 +64,15 @@ subMenu:	beq $a0, 1, menuCliente		#Menu do cliente foi escolhido
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #--------------------------------------------------Menu Clientes------------------------------------------------------------------------------------
-menuCliente: 	la $t0, opcaoCliente	#Carrega o menu do cliente
-		jal escolha		#Função para mostrar o menu e escolher a opções [ escolha(opcaoCliente) ]
-		addi $t1, $t1, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
-		addi $t2, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
-		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
-		j Main			#Fim das operações com o cliente(s)
+menuCliente: 	la $t0, opcaoCliente		#Carrega o menu do cliente
+		jal escolha			#Função para mostrar o menu e escolher a opções [ escolha(opcaoCliente) ]
+		addi $t1, $t1, 0		#Parâmetro pra saber se a opção escolhido é maior que 0
+		addi $t2, $zero, 6		#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
+		jal verificacao			#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
+		jal verificarCliente
+		j Main				#Fim das operações com o cliente(s)
 		
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 #--------------------------------------------------Menu Pratos (Cárdapio)------------------------------------------------------------------------------------
 menuPrato: 	la $t0, opcaoCardapio	#Carrega o menu dos pratos
 		jal escolha		#Função para mostrar o menu e escolher a opções [ escolha(opcaoCardapio) ]
@@ -102,6 +107,43 @@ menuPedidos: 	la $t0, opcaoPedido	#Carrega o menu de Pedidos
 		addi $t2, $zero, 8	#Parâmetro pra saber se a opção escolhida é menor ou igual a 8
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 8 [ verificacao(0, 8) ]
 		j Main			#Fim das operações com os Pedidos
+
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-exit: nop
+#--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
+cadastrarCliente: la $t0, nome		#Carrega o nome	
+	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
+	la $a0, ($t0)			#Carregando o "texto" da tela de escolha
+	syscall				#Syscall da tela
+	j digcpf			#Pulo pra exercução da tela CPF
 	
+digcpf	: la $t1, cpf			#Carrega o CPF
+	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
+	la $a0, ($t1)			#Carregando o "texto" da tela de escolha
+	syscall				#Syscall da tela
+	j pref				#Pulo pra exercução da tela de Preferencia
+	
+pref:	la $t2, preferencia		#Carrega o CPF
+	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
+	la $a0, ($t2)			#Carregando o "texto" da tela de escolha
+	syscall				#Syscall da tela
+	j Main				#Fim das operações com o cadastro cliente			
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Remover Cliente------------------------------------------------------------------------------------
+removerCliente:	nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Editar Cliente------------------------------------------------------------------------------------
+editarCliente:	nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Visualizar Cliente------------------------------------------------------------------------------------
+visualizarCliente: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Cadastrar reserva do Cliente------------------------------------------------------------------------------------
+cadastrarReserva: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+exit: nop
