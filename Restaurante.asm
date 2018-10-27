@@ -32,6 +32,23 @@
 	#Cardápio
 	arqCard: .asciiz "cardapio.txt"
 	
+	#Parametros (labels de cliente):
+	#Cliente (Cadastro)
+	
+	digitenome: .asciiz "Digite o nome do cliente: \n"
+	digitecpf: .asciiz "Digite o CPF do cliente:: \n"
+	digitepreferencia: .asciiz "Digite a preferencia do cliente: \n"
+	
+	#Parametros (Labels de armazenamento)
+	#Cliente (Cadastro)
+	nome: .space 20
+	cpf: .space 20
+	preferencia: .space 20
+	
+	#Nomes dos arquivos
+	#Cliente
+	arqClien: .asciiz "cliente.txt"
+		
 	
 .text
 Main:
@@ -47,7 +64,8 @@ Main:
 	j subMenu		#Função apra verificar o submenu escolhido
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	j exit			#Fim da execução
-	
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
 #------------------------------Função de seleção de menu escolha(string texto) return int escolhido---------------------------------------------------	
 escolha: 	addi $v0, $zero, 51	#Configurando a syscall para lançar tela de escolha
 	 	syscall			#Syscall da tela
@@ -140,6 +158,7 @@ menuCliente: 	la $a0, opcaoCliente	#Carrega o menu do cliente
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
 		addi $a1, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
+		jal escolhacliente
 		j Main			#Fim das operações com o cliente(s)
 		
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -227,7 +246,7 @@ funcaoCadastrarPrato: 	la $a0, digiteNomePrato		#Carrega a label do nome do prat
 			jal abrirArquivo		#Chamada da função de abrir arquivo
 			add $a0, $v0, $zero		#Pegando o arquivo retornado
 			la $a1, nomePrato		#Passar o nome do prato como parâmetro
-			add $a2, $zero, 60		#Escolhendo a quantidade máxima de caracteres
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
 			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
 			jal fecharArquivo		#Chamando função pra fechar arquivo
 			j exit				
@@ -253,12 +272,64 @@ funcaoRankingPratos:
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #===========================================================FIM DO CÁRDAPIO=======================================================================
 
+#===========================================================CLIENTE===============================================================================
+#-------------------------------------------------ESCOLHA----------------------------------------------------------------------------------
+escolhacliente:	beq $a2, 1, cadastrarCliente		#Chamada da função de cadastro de cliente escolhida
+		beq $a2, 2, removerCliente		#Chamada da funcao de remoção de cliente escolhida
+		beq $a2, 3, editarCliente		#Chamada da função de edição de cliente escolhida
+		beq $a2, 4, visualizarCliente		#Chamada da função de visualização de cliente escolhida
+		beq $a2, 5, cadastrarReserva	        #Chamada da função de cadastrar reserva escolhida
+		beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
+			
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
+cadastrarCliente: 	la $a0, digitenome		#Carrega a label do nome do cliente
+			la $a1, nome			#Carrega a label que vai armazenar o nome do cliente
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			la $a0, digitecpf	
+			la $a1, cpf	
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString				
+			la $a0, arqClien		#Parâmetro com o nome do arquivo do cliente
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $a0, $v0, $zero		#Pegando o arquivo retornado
+			la $a1, cpf			#Passar o nome do cliente como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no 
+			la $a1, nome			#Passar o nome do cliente como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
+			jal fecharArquivo		#Chamando função pra fechar arquivo
+			j exit	
+	
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Remover Cliente------------------------------------------------------------------------------------
+removerCliente:	nop
 
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Editar Cliente------------------------------------------------------------------------------------
+editarCliente:	nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Visualizar Cliente------------------------------------------------------------------------------------
+visualizarCliente: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Cadastrar reserva do Cliente------------------------------------------------------------------------------------
+cadastrarReserva: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Voltar pro main menu----------------------------------------------------------------------------------
 retornaMain: j Main		
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
 ok: jr $ra	#Temporário!
 
 exit: nop
