@@ -17,14 +17,6 @@
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
 	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Visualizar um pedido \n 5 - Gerar lista de pedidos em determinado período de tempo \n 6 - Calcular Lucro dos pedidos em determinado período de tempo \n 7 - Completar pedido \n 8 - Retornar para o Menu Principal"
-<<<<<<< HEAD
-	
-	nome: .asciiz "Nome do cliente: \n"
-	cpf: .asciiz "CPF do cliente:: \n"
-	preferencia: .asciiz "Preferencia do cliente: \n"
-	
-	limite: .space 50
-=======
 	#fim dos subMenus.
 	
 	#Parametros (labels de pedido):
@@ -40,8 +32,24 @@
 	#Cardápio
 	arqCard: .asciiz "cardapio.txt"
 	
+	#Parametros (labels de cliente):
+	#Cliente (Cadastro)
 	
->>>>>>> c63a0934c0cf1fca90aa8a23db6517493a2949c0
+	digitenome: .asciiz "Digite o nome do cliente: \n"
+	digitecpf: .asciiz "Digite o CPF do cliente:: \n"
+	digitepreferencia: .asciiz "Digite a preferencia do cliente: \n"
+	
+	#Parametros (Labels de armazenamento)
+	#Cliente (Cadastro)
+	nome: .space 20
+	cpf: .space 20
+	preferencia: .space 20
+	
+	#Nomes dos arquivos
+	#Cliente
+	arqClien: .asciiz "cliente.txt"
+		
+	
 .text
 Main:
 #----------------------------------Menu Principal---------------------------------------------------------------------------------------------------
@@ -56,20 +64,14 @@ Main:
 	j subMenu		#Função apra verificar o submenu escolhido
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	j exit			#Fim da execução
-	
-<<<<<<< HEAD
-#------------------------------Função de seleçãod e menu escolha(string texto) return int escolhido---------------------------------------------------	
-escolha: 	addi $v0, $zero, 51		#Carregando o "texto" da tela de escolha
-	 	syscall				#Syscall da tela
-	 	jr $ra				#Fim da função
-=======
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx	
 #------------------------------Função de seleção de menu escolha(string texto) return int escolhido---------------------------------------------------	
 escolha: 	addi $v0, $zero, 51	#Configurando a syscall para lançar tela de escolha
 	 	syscall			#Syscall da tela
 	 	add $v0, $zero, $a0	#Passando o retorno da função
 	 	add $v1, $zero, $a1	#Passando o retorno do status da função
 	 	jr $ra			#Fim da função
->>>>>>> c63a0934c0cf1fca90aa8a23db6517493a2949c0
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #-----------------------------------------------------Abrir arquivo-------------------------------------------------------------------------------
 abrirArquivo:	addi $v0, $zero, 13 	#Configurando a chamada da syscall que abre o arquivo
@@ -149,15 +151,6 @@ subMenu:	beq $a0, 1, menuCliente		#Menu do cliente foi escolhido
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #--------------------------------------------------Menu Clientes------------------------------------------------------------------------------------
-<<<<<<< HEAD
-menuCliente: 	la $t0, opcaoCliente		#Carrega o menu do cliente
-		jal escolha			#Função para mostrar o menu e escolher a opções [ escolha(opcaoCliente) ]
-		addi $t1, $t1, 0		#Parâmetro pra saber se a opção escolhido é maior que 0
-		addi $t2, $zero, 6		#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
-		jal verificacao			#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
-		jal verificarCliente
-		j Main				#Fim das operações com o cliente(s)
-=======
 menuCliente: 	la $a0, opcaoCliente	#Carrega o menu do cliente
 		jal escolha		#Função para mostrar o menu e escolher a opções [ escolha(opcaoCliente) ]
 		add $a2, $zero, $v0	#Adicionando a opção escolhida para passar como parâmetro para a verificação
@@ -165,10 +158,11 @@ menuCliente: 	la $a0, opcaoCliente	#Carrega o menu do cliente
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
 		addi $a1, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
+		jal escolhacliente
 		j Main			#Fim das operações com o cliente(s)
->>>>>>> c63a0934c0cf1fca90aa8a23db6517493a2949c0
 		
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 #--------------------------------------------------Menu Pratos (Cárdapio)------------------------------------------------------------------------------------
 menuPrato: 	la $a0, opcaoCardapio	#Carrega o menu dos pratos
 		jal escolha		#Função para mostrar o menu e escolher a opções [ escolha(opcaoCardapio) ]
@@ -212,22 +206,7 @@ menuPedidos: 	la $a0, opcaoPedido	#Carrega o menu de Pedidos
 		addi $a1, $zero, 8	#Parâmetro pra saber se a opção escolhida é menor ou igual a 8
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 8 [ verificacao(0, 8) ]
 		j Main			#Fim das operações com os Pedidos
-
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-<<<<<<< HEAD
-#--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
-cadastrarCliente: la $t0, nome		#Carrega o nome	
-	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
-	la $a0, ($t0)			#Carregando o "texto" da tela de escolha
-	syscall				#Syscall da tela
-	j digcpf			#Pulo pra exercução da tela CPF
-	
-digcpf	: la $t1, cpf			#Carrega o CPF
-	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
-	la $a0, ($t1)			#Carregando o "texto" da tela de escolha
-	syscall				#Syscall da tela
-	j pref				#Pulo pra exercução da tela de Preferencia
-=======
 
 #-------------------------------------------------Chamar janela de string--------------------------------------------------------------------------
 chamarJanelaString: 	addi $v0, $zero, 54	#Escolhe a janela de dialogo de string
@@ -267,7 +246,7 @@ funcaoCadastrarPrato: 	la $a0, digiteNomePrato		#Carrega a label do nome do prat
 			jal abrirArquivo		#Chamada da função de abrir arquivo
 			add $a0, $v0, $zero		#Pegando o arquivo retornado
 			la $a1, nomePrato		#Passar o nome do prato como parâmetro
-			add $a2, $zero, 60		#Escolhendo a quantidade máxima de caracteres
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
 			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
 			jal fecharArquivo		#Chamando função pra fechar arquivo
 			j exit				
@@ -293,22 +272,43 @@ funcaoRankingPratos:
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #===========================================================FIM DO CÁRDAPIO=======================================================================
 
-
-
-#-------------------------------------------------Voltar pro main menu----------------------------------------------------------------------------------
-retornaMain: j Main		
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-ok: jr $ra	#Temporário!
-
-exit: nop
->>>>>>> c63a0934c0cf1fca90aa8a23db6517493a2949c0
+#===========================================================CLIENTE===============================================================================
+#-------------------------------------------------ESCOLHA----------------------------------------------------------------------------------
+escolhacliente:	beq $a2, 1, cadastrarCliente		#Chamada da função de cadastro de cliente escolhida
+		beq $a2, 2, removerCliente		#Chamada da funcao de remoção de cliente escolhida
+		beq $a2, 3, editarCliente		#Chamada da função de edição de cliente escolhida
+		beq $a2, 4, visualizarCliente		#Chamada da função de visualização de cliente escolhida
+		beq $a2, 5, cadastrarReserva	        #Chamada da função de cadastrar reserva escolhida
+		beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
+			
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
+cadastrarCliente: 	la $a0, digitenome		#Carrega a label do nome do cliente
+			la $a1, nome			#Carrega a label que vai armazenar o nome do cliente
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			la $a0, digitecpf	
+			la $a1, cpf	
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString				
+			la $a0, arqClien		#Parâmetro com o nome do arquivo do cliente
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $a0, $v0, $zero		#Pegando o arquivo retornado
+			la $a1, cpf			#Passar o nome do cliente como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no 
+			la $a1, nome			#Passar o nome do cliente como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
+			jal fecharArquivo		#Chamando função pra fechar arquivo
+			j exit	
 	
-pref:	la $t2, preferencia		#Carrega o CPF
-	addi $v0, $zero, 51		#Configurando a syscall para lançar tela de escolha
-	la $a0, ($t2)			#Carregando o "texto" da tela de escolha
-	syscall				#Syscall da tela
-	j Main				#Fim das operações com o cadastro cliente			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------------------------Remover Cliente------------------------------------------------------------------------------------
 removerCliente:	nop
@@ -327,5 +327,10 @@ cadastrarReserva: nop
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+#-------------------------------------------------Voltar pro main menu----------------------------------------------------------------------------------
+retornaMain: j Main		
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ok: jr $ra	#Temporário!
 
 exit: nop
+	
