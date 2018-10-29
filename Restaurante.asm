@@ -244,7 +244,8 @@ objetoNaoEncontrado:	addi $a1, $zero, 2			#Escolhendo tela de erro
 			j Main					#Fim do tratamento da exceção
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #---------------------------------------------Erro: Prato já cadastrado!!----------------------------------------------------------------------
-pratoJaCadastrado:	addi $a1, $zero, 2			#Escolhendo tela de erro
+pratoJaCadastrado:	jal fecharArquivo
+			addi $a1, $zero, 2			#Escolhendo tela de erro
 			la $a0, pratoJaExisteErro		#Carregando a label que diz o erro
 			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
 			jal printf				#Chamando o print [ printf( error) ]
@@ -372,20 +373,21 @@ existenciaPratoCadastro:	la $a0, arqCard					#Parâmetro com o nome do arquivo do
 					
 procedimentoBuscaCPrato:	beq $v0, $zero, armazenamentoPrato	    	# se v0 == 0 achou fim do arquivo, então o prato não foi cadastrado
 				la $a1, pratoGuardar				#Especificando onde os caracteres vão estar
+				beq $a3, 20, pratoJaCadastrado			#Condição, if a3 == 22, então encontrou o prato
 				add $t0, $zero, $a2				#Salvando o indice atual (caso os caracteres estejam sendo iguais)
-				addi $a2, $zero, 1 				#Não sei o que é mode
+				addi $a2, $zero, 1 				#Quantidade de caracteres lidos
 				jal lerDoArquivo				#Chamada da função de ler o arquivo
-				beq $a3, 22, pratoJaCadastrado			#Condição, if a3 == 22, então encontrou o prato
 				la $s2, pratoGuardar				#Carrega o caracter lido
 				addi $a3, $a3, 1				#Incrementa o valor de a3 pra saber se o prato foi encontrado
 				add $a2, $zero, $t0				#Volta o valor do indice para a2
-				addi $a2, $a2, 1				#Incrementa o indice 
 				lb $t1, ($s1)					#Carrega o caracter de indice a2 do nome passado
 				lb $t2, ($s2)					#Carrega o caracter lido do arquivo
+				addi $a2, $a2, 1				#Incrementa o indice 
 				addi $s1, $s1, 1				#incrementa o indice de s1 pra pegar o proximo caracter do nome passado
 				beq $t2, $t1, procedimentoBuscaCPrato		#Verifica se o caracter lido é o mesmo da posição a2 do nome do prato, se sim avança pro próximo car
 				sub $s1, $s1, $a2				#Se os caracteres forem diferentes, zero o indice do nome do prato
 				sub $a2, $a2, $a2 				#Se não for o mesmo, zero o indice e recomeça
+				sub $a3, $a3, $a3			#Condição, if a3 == 22, então encontrou o prato
 				j procedimentoBuscaCPrato			#Recomeça com a próxima iteração
 			
 armazenamentoPrato:	jal fecharArquivo
