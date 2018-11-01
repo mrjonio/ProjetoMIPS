@@ -31,6 +31,7 @@
 	#Parametros (labels de pedido):
 	#Prato (Cadastro)
 	digiteNomePrato: .asciiz "Digite o nome do Prato: "
+	digiteNomePratoBuscado: .asciiz "Digite o nome do Prato para editar: "
 	digitePrecoPrato: .asciiz "Digite o preço do Prato: "  
 	
 	#Parametros (Labels de armazenamento)
@@ -43,6 +44,7 @@
 	#Nomes dos arquivos
 	#Cardápio
 	arqCard: .asciiz "cardapio.txt"
+	arqCard2: .asciiz "cardapioTemp.txt"
 	
 	#Parametros (labels de cliente):
 	#Cliente (Cadastro)
@@ -64,7 +66,8 @@
 	#Labels auxiliares
 	virgula: .asciiz ";"
 	quebraLinha: .asciiz "\r\n"
-	espaco: .asciiz " "
+	espaco: .asciiz ""
+	byte: .space 2
 		
 	
 .text
@@ -93,8 +96,8 @@ escolha: 	addi $v0, $zero, 51	#Configurando a syscall para lançar tela de escolh
 #-----------------------------------------------------Abrir arquivo-------------------------------------------------------------------------------
 abrirArquivo:	addi $v0, $zero, 13 	#Configurando a chamada da syscall que abre o arquivo
 		syscall			#Syscall da abertura de arquivo
-		add $s0, $zero, $v0
-		add $a0, $zero, $s0	#Passando o resultado da chamada para a0, para ser verificado se o arquivo existe
+		add $s3, $zero, $v0
+		add $a0, $zero, $s3	#Passando o resultado da chamada para a0, para ser verificado se o arquivo existe
 		j verificacaoArquivo	#Chamada da função que verifica se o arquivo 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------Guarda em Arquivo------------------------------------------------------------------------------------------------
@@ -118,68 +121,189 @@ fecharArquivo:		addi $v0, $zero, 16	#Seleciona a opçãod e fechar o arquivo
 			jr $ra			#Volta pro fluxo normal do código
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
+#--------------------------------------------------------Ler tamanho palavra----------------------------------------------------------------------
+stringLen:							#Função para ler a quantidade de caracteres de uma palavra
+salvarRetorno0: 	addi $sp, $sp, -4			#Liberando uma palavra na pilha para armazenar o retorno do fluxo
+			sw $ra, ($sp)				#Armazenando na pilha o retono para o fluxo normal
+			j retornaLenPal				#Indo calcular a quantidade de caracteres do arquivo
+
+retornaLenPal: 		lb $t1, ($s1)				#Carregando o caracter de inidice i da palavra
+			beq $t1, 0, compara			#Se o caracter for igual a 0, significa que chegou no espaço
+			addi $a3, $a3, 1			#Cada iteração, significa que existe mais um caracter no arquivo
+			addi $s1, $s1, 1			#Aumentando o indice i
+			j retornaLenPal
+
+compara:		addi $s1, $s1, 1			#Aumenta o indice i dnv pra fazer a comparação
+			lb $t2, ($s1)				#Carrega o caracter de indice i + 1 pra ver se ele tbm é espaço
+			beq $t2, 0, retornaFluxo0		#Se i e i + 1 forem espaços, então já temos o indice
+			j retornaLenPal				#Recomeça com a próxima iteração
+
+retornaFluxo0:		lw $ra, 0($sp)				#Pegando o retorno original do fluxo da pilha
+			addi $sp, $sp, 4			#Desalocando o espaço que foi usado para guardar o retorno na pilha
+			add $v0, $zero, $a3			#Adicionando o tamanho do arquivo em v0
+			jr $ra					#Voltando ao fluxo normal do código
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#----------------------------------------------------------Contagem de tamanho de arquivo----------------------------------------------------------
+salvarRetorno1: 	addi $sp, $sp, -4			#Liberando uma palavra na pilha para armazenar o retorno do fluxo
+			sw $ra, ($sp)				#Armazenando na pilha o retono para o fluxo normal
+			j retornaLen				#Indo calcular a quantidade de caracteres do arquivo
+
+retornaLen: 		beq $v0, $zero,	retornaFluxo1	   	#se v0 == 0 achou fim do arquivo, posso retornar ao fluxo normal do código
+			addi $a3, $a3, 1			#Cada iteração, significa que existe mais um caracter no arquivo
+			jal lerDoArquivo			#Chamada da funçãod e ler o arquivo
+			j retornaLen				#Recomeça com a próxima iteração
+
+retornaFluxo1:		lw $ra, 0($sp)				#Pegando o retorno original do fluxo da pilha
+			addi $sp, $sp, 4			#Desalocando o espaço que foi usado para guardar o retorno na pilha
+			add $v0, $zero, $a3			#Adicionando o tamanho do arquivo em v0
+			jr $ra					#Voltando ao fluxo normal do código
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+#----------------------------------------------------------Localizar objeto em arquivo----------------------------------------------------------
+BuscarObjeto:
+salvarRetorno2: 	sub $a3, $a3, $a3
+			addi $sp, $sp, -4			#Liberando uma palavra na pilha para armazenar o retorno do fluxo
+			sw $ra, ($sp)				#Armazenando na pilha o retono para o fluxo normal
+			j retornaLocalizacao			#Indo calcular a a posicao do objeto no arquivo
+
+			#For (a3 = 0; a3 < arquivo.lenght() || a2 < 20; a3++)
+retornaLocalizacao: 	beq $v0, $zero,	objetoNaoEncontrado	# se v0 == 0 achou fim do arquivo, e o objeto não existe no arquivo
+			add $t3, $zero, $a1
+			beq $a2, $a1, retornaFluxo2		#Se todos os caracteres do nome proucurado, são iguais a de um obejto do arquivo, então encontrei
+			add $t0, $zero, $a2			#Salvando temporáriamente o indice atual do nome proucurado
+			la $a1, byte				#Carregando a label onde o caracter lido do arquivo vai ser armazenado
+			add $a2, $zero, $zero 			#Não sei o que é mode
+			jal lerDoArquivo			#Chamada da função de ler o arquivo
+			add $a1, $zero, $t3
+			add $a2, $zero, $t0			#Pegando o valor original do indice atual do nome do objeto
+			addi $a3, $a3, 1			#Incrementando o valor de a3, para saber quantos caracteres existem antes do objeto proucurado
+			la $s2, byte
+			lb $t1, ($s3)				#Carregando um caracter do nome proucrado (indice $a2)
+			lb $t2, ($s2)				#Carregando o caracter lido do arquivo (indice $a3)
+			addi $s3, $s3, 1			#Incrementando o caracter do objeto proucurado
+			add $a2, $a2, 1				#Incrementando o indice do objeto proucurado
+			beq  $t1, $t2, retornaLocalizacao	#Se os caracteres forem iguais, então eu recomeço logo o laço apra comparar o próximo até que a2 seja 20
+			sub $s3, $s3, $a2			#Se os caracteres não forem iguais eu reseto o indice de $s1 e $a2
+			sub $a2, $a2, $a2			#Se os caracteres não forem iguais eu reseto o indice de $s1 e $a2
+			j retornaLocalizacao			#Recomeça com a próxima iteração
+
+retornaFluxo2:		lw $ra, 0($sp)				#Recarrega o retorno original do fluxo do código
+			addi $sp, $sp, 4			#Realoca o que foi usado da pilha
+			sub $a3, $a3, $a1 			#Retira 20 caracteres do indice original, para saber exatamente onde começa o objeto
+			add $v0, $zero, $a3			#Passa o retorno para v0
+			jr $ra					#Retorna ao fluxo original
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 #--------------------------------------------------------Buscar prato-----------------------------------------------------------------------------
-buscaPrato:		la $a0, arqCard					#Parâmetro com o nome do arquivo do cárdapio
-			add $a1, $zero, $zero				#Especificando que quero ler o arquivo
-			add $a2, $zero, $zero 				#Não sei o que é mode
-			jal abrirArquivo				#Chamada da função de abrir arquivo
-			add $s0, $v0, $zero				#Pegando o arquivo retornado
-			add $a0, $zero, $s0				#Salvando arquivo como parâmetro para editar o prato escolhido
-			add $a3, $zero, $zero
-			la $s1, nomePratoProucurado			#Carrega o nome do prato que está sendo proucurado
-			j procedimentoBusca
-			
-					
-procedimentoBusca:	beq $v0, $zero, objetoNaoEncontrado    	# se v0 == 0 achou fim do arquivo
-			la $a1, pratoGuardar				#Especificando onde os caracteres vão estar
-			add $t0, $zero, $a2
-			add $a2, $zero, $zero 				#Não sei o que é mode
-			jal lerDoArquivo				#Chamada da funçãod e ler o arquivo
-			beq $a3, 22, pratoEncontrado			#Condição, if a3 == 22, então encontrou o prato
-			la $s2, pratoGuardar				#Carrega o caracter lido
-			addi $a3, $a3, 1				#Incrementa o valor de a3 (pra marcar onde tá o maldito prato)
-			add $a2, $zero, $t0
-			addi $a2, $a2, 1
-			addi $sp, $sp, -1				#Liberando espaço na pilha
-			lb $t1, ($s1)
-			lb $t2, ($s2)
-			addi $s1, $s1, 1
-			sb $sp, ($s2)					#Guardando cada caracter na pilha
-			beq $t2, $t1, procedimentoBusca			#Verifica se o caracter lido é o mesmo da posição i do nome do prato, se sim avança pro próximo car
-			sub $s1, $s1, $a2
-			sub $a2, $a2, $a2 				#Se não for o mesmo, zero o indice e recomeça
-			j procedimentoBusca				#Recomeça com a próxima iteração
-			
-pratoEncontrado: 	jal fecharArquivo				#Chamando função pra fechar arquivo
-			addi $a3, $a3, 12
-			addi $sp, $sp, 22
-			addi $sp, $sp, -33
-			add $a0, $zero, $zero
-			la $s1, espaco
-			j excluirPratoAntigo
+buscaPrato:		la $s1, nomePratoProucurado		#Preparando o nome do prato para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do nome do prato buscado
+			la $a0, arqCard				#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada 
+			la $s3, nomePratoProucurado		#Passando o nome do prato buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do prato no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqCard				#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqCard2			#Abrindo o segundo arquivo (armazenamento temporário)	
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoEdicao			#Começa a passagem dos caracteres para o próximo arquivo
 
-excluirPratoAntigo:	beq $a0, $a3, editandoNoArquivo
-			sb $sp, ($s1)
-			addi $a0, $a0, 1
-			j excluirPratoAntigo
-
-editandoNoArquivo:	la $a0, arqCard			#Parâmetro com o nome do arquivo do cárdapio
+rebobinarEdicao:	add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoEdicao	#Voltando ao processo original 
+			
+processoEdicao: 	beq $a2, $a3, prepararParaExcluir		#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, editandoNoArquivo			#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoEdicao				#Próxima iteração
+			
+prepararParaExcluir:	addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j excluirObjeto					#Indo para a função de retirada do objeto
+			
+excluirObjeto:		beq $a2, 33, rebobinarEdicao			#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j excluirObjeto					#Proxima iteração
+			 
+editandoNoArquivo:	jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqCard			#Parâmetro com o nome do arquivo do cárdapio
 			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
 			addi $a2, $zero, 0 		#Não sei o que é mode
 			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqCard			#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
 			add $s0, $zero, $v0 		#Guardando o FD
-			add $a0, $zero, $s0		#Colocando FD como argumento
+			la $a0, arqCard2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j guardarDadosAntigos		#Iniciando função para guardar tudo de novo no arquivo
 
-guardarDadosAntigos:	beq $a3, $zero, finalizarEdicao
-			lb $a1, 0($sp)
-			add $a2, $zero, 2		#Escolhendo a quantidade máxima de caracteres para guardar no arquivo
-			jal guardarEmArquivo		#Chamando função para guardar o nome do prato no arquivo
-			j guardarDadosAntigos
-			addi $sp, $sp, 1
+guardarDadosAntigos:	beq $v0, 0, finalizarEdicao	#Se todos os caracteres foram lidos, então finaliza a edição
+			add $a0, $zero, $s1
+			la $a1, pratoGuardar
+			add $a2, $zero, 1
+			jal lerDoArquivo 
+			add $t0, $zero, $v0
+			add $a0, $zero, $s0
+			la $a1, pratoGuardar
+			addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+			jal guardarEmArquivo		#Guardando cada caracter um por um
+			add $v0, $zero, $t0
+			j guardarDadosAntigos		#Proxima iteração
 
 finalizarEdicao: 	jal fecharArquivo
-			j armazenamentoPrato
-			
+			add $a0, $zero, $s1
+			jal fecharArquivo
+			la $a0, arqCard2			#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j armazenamentoPrato	
 			j exit
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -237,14 +361,15 @@ arquivoNaoEncontrado:	addi $a1, $zero, 2			#Escolhendo tela de erro
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #---------------------------------------------Erro: Objeto não encontrado!!----------------------------------------------------------------------
-objetoNaoEncontrado:	addi $a1, $zero, 2			#Escolhendo tela de erro
+objetoNaoEncontrado:	jal fecharArquivo
+			addi $a1, $zero, 2			#Escolhendo tela de erro
 			la $a0, naoEncontradoErro		#Carregando a label que diz o erro
 			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
 			jal printf				#Chamando o print [ printf( error) ]
 			j Main					#Fim do tratamento da exceção
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #---------------------------------------------Erro: Prato já cadastrado!!----------------------------------------------------------------------
-pratoJaCadastrado:	jal fecharArquivo
+pratoJaCadastrado:	jal fecharArquivo			#Fechando o arquivo que estava sendo usado (pra não dar problemas depois)
 			addi $a1, $zero, 2			#Escolhendo tela de erro
 			la $a0, pratoJaExisteErro		#Carregando a label que diz o erro
 			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
@@ -369,7 +494,6 @@ existenciaPratoCadastro:	la $a0, arqCard					#Parâmetro com o nome do arquivo do
 				add $a3, $zero, $zero				#Inicializando a condição de parada
 				la $s1, nomePrato				#Carrega o nome do prato que está sendo proucurado
 				j procedimentoBuscaCPrato
-			
 					
 procedimentoBuscaCPrato:	beq $v0, $zero, armazenamentoPrato	    	# se v0 == 0 achou fim do arquivo, então o prato não foi cadastrado
 				la $a1, pratoGuardar				#Especificando onde os caracteres vão estar
@@ -387,10 +511,10 @@ procedimentoBuscaCPrato:	beq $v0, $zero, armazenamentoPrato	    	# se v0 == 0 ac
 				beq $t2, $t1, procedimentoBuscaCPrato		#Verifica se o caracter lido é o mesmo da posição a2 do nome do prato, se sim avança pro próximo car
 				sub $s1, $s1, $a2				#Se os caracteres forem diferentes, zero o indice do nome do prato
 				sub $a2, $a2, $a2 				#Se não for o mesmo, zero o indice e recomeça
-				sub $a3, $a3, $a3			#Condição, if a3 == 22, então encontrou o prato
+				sub $a3, $a3, $a3				#Condição, if a3 == 22, então encontrou o prato
 				j procedimentoBuscaCPrato			#Recomeça com a próxima iteração
 			
-armazenamentoPrato:	jal fecharArquivo
+armazenamentoPrato:	jal fecharArquivo		#Fechando arquivo
 			la $a0, arqCard			#Parâmetro com o nome do arquivo do cárdapio
 			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
 			addi $a2, $zero, 0 		#Não sei o que é mode
@@ -419,18 +543,24 @@ funcaoRemoverPrato: la $t2, digiteNomePrato
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Editar Prato----------------------------------------------------------------------------------
-funcaoEditarPrato: 	la $a0, digiteNomePrato				#Carrega a label do nome do prato
-			la $a1, nomePratoProucurado			#Carrega a label que vai armazenar o nome do prato proucurado
-			addi $a2, $zero, 20				#Define a quantidade máxima de caracteres
-			jal chamarJanelaString				#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0				#Adicionando o que estava em v0 para a0
-			jal verificacaoString				#Verifica se está tudo ok com o que foi digitado
-			la $a0, digitePrecoPrato			#Carrega a label do nome do prato
-			la $a1, precoPrato				#Carrega a label que vai armazenar o nome do prato proucurado
-			addi $a2, $zero, 10				#Define a quantidade máxima de caracteres
-			jal chamarJanelaString				#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0				#Adicionando o que estava em v0 para a0
-			jal verificacaoString				#Verifica se está tudo ok com o que foi digitado
+funcaoEditarPrato: 	la $a0, digiteNomePratoBuscado		#Carrega a label do nome do prato
+			la $a1, nomePratoProucurado		#Carrega a label que vai armazenar o nome do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			la $a0, digiteNomePrato			#Carrega a label do nome do prato
+			la $a1, nomePrato			#Carrega a label que vai armazenar o nome do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			la $a0, digitePrecoPrato		#Carrega a label do preco do prato
+			la $a1, precoPrato			#Carrega a label que vai armazenar o preco do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verificando o preco do prato?
 			j buscaPrato
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
