@@ -25,22 +25,33 @@
 	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Retornar para o Menu Principal"
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
-	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Visualizar um pedido \n 5 - Gerar lista de pedidos em determinado período de tempo \n 6 - Calcular Lucro dos pedidos em determinado período de tempo \n 7 - Completar pedido \n 8 - Retornar para o Menu Principal"
+	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Retornar para o Menu Principal"
 	#fim dos subMenus.
 	
 	#Parametros (labels de pedido):
-	#Prato (Cadastro)
+	#Prato
 	digiteNomePrato: .asciiz "Digite o nome do Prato: "
 	digiteNomePratoBuscado: .asciiz "Digite o nome do Prato para editar: "
 	digiteNomePratoRemover: .asciiz "Digite o nome do Prato que será removido: "
 	digitePrecoPrato: .asciiz "Digite o preço do Prato: "  
 	
+	#Pedidos
+	digiteNomePratoPedido: .asciiz "Digite o nome do Prato pedido: "
+	digiteClienteQuePediu: .asciiz "Digite o nome do Cliente que pediu: "
+	digiteDataPedido: .asciiz "Digite a data do pedido: "
+	
+	
 	#Parametros (Labels de armazenamento)
-	#Prato (Cadastro)
+	#Prato 
 	pratoGuardar: .space 2
 	nomePrato: .space 20
 	nomePratoProucurado: .space 20
 	precoPrato: .space 20
+	
+	#Pedidos
+	pratoPedido: .space 20
+	clienteQuePediu: .space 20
+	dataPedido: .space 20
 
 	#Nomes dos arquivos
 	#Cardápio
@@ -447,6 +458,7 @@ menuPedidos: 	la $a0, opcaoPedido	#Carrega o menu de Pedidos
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
 		addi $a1, $zero, 8	#Parâmetro pra saber se a opção escolhida é menor ou igual a 8
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 8 [ verificacao(0, 8) ]
+		jal acaoPedido		#Função para verificar a escolha de ação em relação aos pedidos
 		j Main			#Fim das operações com os Pedidos
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -460,15 +472,13 @@ chamarJanelaString: 	addi $v0, $zero, 54	#Escolhe a janela de dialogo de string
 
 
 #===========================================================CARDÁPIO===============================================================================
-#-------------------------------------------------Cadastrar Prato----------------------------------------------------------------------------------
+#-------------------------------------------------Ações Prato----------------------------------------------------------------------------------
 acaoPrato:	beq $a2, 1, funcaoCadastrarPrato	#Chamada da função de cadastro de prato escolhida
 		beq $a2, 2, funcaoRemoverPrato		#Chamada da funcao de remoção de pratos escolhida
 		beq $a2, 3, funcaoEditarPrato		#Chamada da função de edição de pratos escolhida
 		beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
 #-------------------------------------------------Cadastrar Prato----------------------------------------------------------------------------------
 funcaoCadastrarPrato: 	la $a0, digiteNomePrato			#Carrega a label do nome do prato
 			la $a1, nomePrato			#Carrega a label que vai armazenar o nome do prato
@@ -731,6 +741,47 @@ visualizarCliente: nop
 cadastrarReserva: nop
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+#======================================================Classe pedidos===============================================================================
+#-------------------------------------------------Acao Pedidos----------------------------------------------------------------------------------
+acaoPedido:	beq $a2, 1, funcaoCadastrarPedido	#Chamada da função de cadastro de pedidos escolhida
+		beq $a2, 2, funcaoRemoverPedido		#Chamada da funcao de remoção de pedidos escolhida
+		beq $a2, 3, funcaoEditarPedido		#Chamada da função de edição de pedidos escolhida
+		beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
+			
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+#----------------------------------------------------Cadastrar pedidos----------------------------------------------------------------------------
+funcaoCadastrarPedido:	la $a0, digiteNomePratoPedido		#Carrega a label do nome do prato
+			la $a1, digiteNomePrato			#Carrega a label que vai armazenar o nome do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			la $a0, digiteClienteQuePediu		#Carrega a label do preco do prato
+			la $a1, clienteQuePediu			#Carrega a label que vai armazenar o preco do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verificando o preco do prato
+			la $a0, digiteDataPedido		#Carrega a label do preco do prato
+			la $a1, dataPedido			#Carrega a label que vai armazenar o preco do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verificando o preco do prato?
+			j existenciaPratoCadastro		#Vai pra função que verifica se o prato já foi cadastrado
+
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#-------------------------------------------------------Função remover prato-----------------------------------------------------------------------
+funcaoRemoverPedido:
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#-------------------------------------------------------Função remover prato-----------------------------------------------------------------------
+funcaoEditarPedido:
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+#======================================================Fim dos pedidos==============================================================================
 
 #-------------------------------------------------Voltar pro main menu----------------------------------------------------------------------------------
 retornaMain: j Main		
