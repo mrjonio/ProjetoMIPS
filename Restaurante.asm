@@ -32,6 +32,7 @@
 	#Prato (Cadastro)
 	digiteNomePrato: .asciiz "Digite o nome do Prato: "
 	digiteNomePratoBuscado: .asciiz "Digite o nome do Prato para editar: "
+	digiteNomePratoRemover: .asciiz "Digite o nome do Prato que será removido: "
 	digitePrecoPrato: .asciiz "Digite o preço do Prato: "  
 	
 	#Parametros (Labels de armazenamento)
@@ -283,27 +284,27 @@ editandoNoArquivo:	jal fecharArquivo		#Fecha o arquivo
 			j guardarDadosAntigos		#Iniciando função para guardar tudo de novo no arquivo
 
 guardarDadosAntigos:	beq $v0, 0, finalizarEdicao	#Se todos os caracteres foram lidos, então finaliza a edição
-			add $a0, $zero, $s1
-			la $a1, pratoGuardar
-			add $a2, $zero, 1
-			jal lerDoArquivo 
-			add $t0, $zero, $v0
-			add $a0, $zero, $s0
-			la $a1, pratoGuardar
+			add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+			la $a1, pratoGuardar		#Especificando que vou guardar o caracter lido aqui
+			add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+			jal lerDoArquivo 		#Lendo rs
+			add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+			add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+			la $a1, pratoGuardar		#Lendo o caracter que foi lido
 			addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
 			jal guardarEmArquivo		#Guardando cada caracter um por um
-			add $v0, $zero, $t0
+			add $v0, $zero, $t0		#Pegando de volta o valor de t0
 			j guardarDadosAntigos		#Proxima iteração
 
-finalizarEdicao: 	jal fecharArquivo
-			add $a0, $zero, $s1
-			jal fecharArquivo
-			la $a0, arqCard2			#Parâmetro com o nome do arquivo do cárdapio
-			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+finalizarEdicao: 	jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqCard2		#Parâmetro com o nome do arquivo do cárdapio (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
 			addi $a2, $zero, 0 		#Não sei o que é mode
 			jal abrirArquivo		#Chamada da função de abrir arquivo
 			jal fecharArquivo		#Fechando o arquivo
-			j armazenamentoPrato	
+			j armazenamentoPrato		#Armazenando o prato editado
 			j exit
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -539,7 +540,119 @@ armazenamentoPrato:	jal fecharArquivo		#Fechando arquivo
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Remover Prato----------------------------------------------------------------------------------
-funcaoRemoverPrato: la $t2, digiteNomePrato	
+funcaoRemoverPrato: 	la $a0, digiteNomePratoRemover		#Carrega a label do nome do prato
+			la $a1, nomePratoProucurado		#Carrega a label que vai armazenar o nome do prato
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			
+iniciarRemocao:		la $s1, nomePratoProucurado		#Preparando o nome do prato para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do nome do prato buscado
+			la $a0, arqCard				#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada 
+			la $s3, nomePratoProucurado		#Passando o nome do prato buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do prato no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqCard				#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqCard2			#Abrindo o segundo arquivo (armazenamento temporário)	
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoRemocao			#Começa a passagem dos caracteres para o próximo arquivo
+
+rebobinarRemocao:	add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoRemocao	#Voltando ao processo original 
+			
+processoRemocao: 	beq $a2, $a3, prepararParaRemover		#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, removendoDoArquivo			#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoRemocao				#Próxima iteração
+			
+prepararParaRemover:	addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j removerObjeto					#Indo para a função de retirada do objeto
+			
+removerObjeto:		beq $a2, 33, rebobinarRemocao			#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j removerObjeto					#Proxima iteração
+			 
+removendoDoArquivo:	jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqCard			#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqCard			#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			la $a0, arqCard2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j repassarDadosAntigos		#Iniciando função para guardar tudo de novo no arquivo
+
+repassarDadosAntigos:	beq $v0, 0, finalizarRemocao	#Se todos os caracteres foram lidos, então finaliza a edição
+			add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+			la $a1, pratoGuardar		#Especificando que vou guardar o caracter lido aqui
+			add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+			jal lerDoArquivo 		#Lendo rs
+			add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+			add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+			la $a1, pratoGuardar		#Lendo o caracter que foi lido
+			addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+			jal guardarEmArquivo		#Guardando cada caracter um por um
+			add $v0, $zero, $t0		#Pegando de volta o valor de t0
+			j repassarDadosAntigos		#Proxima iteração
+
+finalizarRemocao: 	jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqCard2		#Parâmetro com o nome do arquivo do cárdapio (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j telaSucesso
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #-------------------------------------------------Editar Prato----------------------------------------------------------------------------------
