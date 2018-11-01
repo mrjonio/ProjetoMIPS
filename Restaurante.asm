@@ -22,7 +22,7 @@
 	
 	#SubMenus:
 	opcaoCliente: .asciiz "Escolha uma opção: \n 1 - Cadastrar um novo Cliente \n 2 - Remover um Cliente \n 3 - Atualizar informações de um cliente \n 4 - Visualizar informações de um cliente \n 5 - Fazer reserva para um cliente \n 6 - Retornar para o Menu Principal"
-	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Vizualizar informações sobre um prato \n 5 - Visualizar Ranking de pratos mais vendidos \n 6 - Retornar para o Menu Principal"
+	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Retornar para o Menu Principal"
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
 	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Visualizar um pedido \n 5 - Gerar lista de pedidos em determinado período de tempo \n 6 - Calcular Lucro dos pedidos em determinado período de tempo \n 7 - Completar pedido \n 8 - Retornar para o Menu Principal"
@@ -411,7 +411,7 @@ menuPrato: 	la $a0, opcaoCardapio	#Carrega o menu dos pratos
 		add $a2, $zero, $v0	#Adicionando a opção escolhida para passar como parâmetro para a verificação
 		add $a3, $zero, $v1	#Adicionando o status para verificar se deu tudo certo 
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
-		addi $a1, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
+		addi $a1, $zero, 4	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
 		jal acaoPrato		#Chamando a função de verificação de escolha
 		j Main			#Fim das operações com o cardapio
@@ -464,9 +464,7 @@ chamarJanelaString: 	addi $v0, $zero, 54	#Escolhe a janela de dialogo de string
 acaoPrato:	beq $a2, 1, funcaoCadastrarPrato	#Chamada da função de cadastro de prato escolhida
 		beq $a2, 2, funcaoRemoverPrato		#Chamada da funcao de remoção de pratos escolhida
 		beq $a2, 3, funcaoEditarPrato		#Chamada da função de edição de pratos escolhida
-		beq $a2, 4, funcaoVisualizarPrato	#Chamada da função de uso/visualização de pratos escolhida
-		beq $a2, 5, funcaoRankingPratos        #Chamada da função de ranking de Pratos escolhida
-		beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
+		beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -676,16 +674,6 @@ funcaoEditarPrato: 	la $a0, digiteNomePratoBuscado		#Carrega a label do nome do 
 			jal verificacaoString			#Verificando o preco do prato?
 			j buscaPrato
 
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-#-------------------------------------------------Visualizar Prato----------------------------------------------------------------------------------
-funcaoVisualizarPrato: 
-			
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-#-------------------------------------------------Ranking Pratos----------------------------------------------------------------------------------
-funcaoRankingPratos: 
-			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #===========================================================FIM DO CÁRDAPIO=======================================================================
 
