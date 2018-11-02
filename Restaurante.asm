@@ -37,7 +37,7 @@
 	
 	#Pedidos
 	digiteNomePratoPedido: .asciiz "Digite o nome do Prato pedido: "
-	digiteClienteQuePediu: .asciiz "Digite o nome do Cliente que pediu: "
+	digiteClienteQuePediu: .asciiz "Digite o cpf do Cliente que pediu: "
 	digiteDataPedido: .asciiz "Digite a data do pedido: "
 	
 	
@@ -58,16 +58,19 @@
 	arqCard: .asciiz "cardapio.txt"
 	arqCard2: .asciiz "cardapioTemp.txt"
 	
+	arqPed: .asciiz "pedidos.txt"
+	arqPed2: .asciiz "pedidosTemp.txt"
+	
 	#Parametros (labels de cliente):
 	#Cliente (Cadastro)
 	
-	digitenome: .asciiz "Digite o nome do cliente: \n"
+	digitenomeCliente: .asciiz "Digite o nome do cliente: \n"
 	digitecpf: .asciiz "Digite o CPF do cliente:: \n"
-	digitepreferencia: .asciiz "Digite a preferencia do cliente: \n"
+	digitepref: .asciiz "Digite sua Preferência: \n Ex: Onivoro ou Vegetariano"
 	
 	#Parametros (Labels de armazenamento)
 	#Cliente (Cadastro)
-	nome: .space 20
+	nomeCliente: .space 20
 	cpf: .space 20
 	preferencia: .space 20
 	
@@ -75,10 +78,32 @@
 	#Cliente
 	arqClien: .asciiz "cliente.txt"
 	
+	#Parametros (labels de funcionario):
+	#Funcionario (Cadastro)
+	
+	digitenomeFun: .asciiz "Digite o nome do funcionario: \n"
+	digitecpffun: .asciiz "Digite o CPF do funcionario:: \n"
+	digiteidade: .asciiz "Digite a idade do funcionario: \n"
+	digitefuncao: .asciiz "Digite a função: \n - Gerente \n - Cozinheiro \n - Caixa \n - Atendente \n - Motoboy \n - Faxineiro \n - Segurança"
+	digitesalario: .asciiz "Digite o salario do funcionario: \n"
+	
+	#Parametros (Labels de armazenamento)
+	#Funcionario (Cadastro)
+	nomeFun: .space 20
+	cpffun: .space 20
+	idade: .space 20
+	funcao: .space 20
+	salario: .space 20
+	
+	#Nomes dos arquivos
+	#Funcionario
+	arqFun: .asciiz "funcionario.txt"
+	
+	
 	#Labels auxiliares
 	virgula: .asciiz ";"
 	quebraLinha: .asciiz "\r\n"
-	espaco: .asciiz ""
+	espaco: .asciiz " "
 	byte: .space 2
 		
 	
@@ -108,6 +133,7 @@ escolha: 	addi $v0, $zero, 51	#Configurando a syscall para lançar tela de escolh
 #-----------------------------------------------------Abrir arquivo-------------------------------------------------------------------------------
 abrirArquivo:	addi $v0, $zero, 13 	#Configurando a chamada da syscall que abre o arquivo
 		syscall			#Syscall da abertura de arquivo
+
 		add $s3, $zero, $v0
 		add $a0, $zero, $s3	#Passando o resultado da chamada para a0, para ser verificado se o arquivo existe
 		j verificacaoArquivo	#Chamada da função que verifica se o arquivo 
@@ -317,7 +343,6 @@ finalizarEdicao: 	jal fecharArquivo		#Fechando o arquivo de leitura
 			jal fecharArquivo		#Fechando o arquivo
 			j armazenamentoPrato		#Armazenando o prato editado
 			j exit
-
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #-----------------------------------------------Printf		[void printf(String texto)]	----------------------------------------------------------------------------------------------
 printf:	add $v0, $zero, $a2	#Escolha do tipo de tela do printf	
@@ -394,6 +419,7 @@ telaSucesso:		addi $a1, $zero, 1			#Escolhendo tela de erro
 			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
 			jal printf				#Chamando o print [ printf( sucesso) ]
 			j Main					#Fim 
+
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------Verificar menu escolhido (verifica qual foi a escolha de sub menu) ------------------------------------------------
 subMenu:	beq $a0, 1, menuCliente		#Menu do cliente foi escolhido
@@ -431,11 +457,12 @@ menuPrato: 	la $a0, opcaoCardapio	#Carrega o menu dos pratos
 #--------------------------------------------------Menu Funcionario------------------------------------------------------------------------------------
 menuFuncionario: 	la $a0, opcaoFuncionario	#Carrega o menu do funcionario
 			jal escolha			#Função para mostrar o menu e escolher a opções [ escolha(opcaoFuncionario) ]
-			add $a2, $zero, $v0	#Adicionando a opção escolhida para passar como parâmetro para a verificação
-			add $a3, $zero, $v1	#Adicionando o status para verificar se deu tudo certo 
+			add $a2, $zero, $v0		#Adicionando a opção escolhida para passar como parâmetro para a verificação
+			add $a3, $zero, $v1		#Adicionando o status para verificar se deu tudo certo 
 			addi $a0, $zero, 0		#Parâmetro pra saber se a opção escolhido é maior que 0
 			addi $a1, $zero, 6		#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
 			jal verificacao			#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
+			jal escolhaFuncionario
 			j Main				#Fim das operações com o funcionario(s)
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
@@ -479,6 +506,8 @@ acaoPrato:	beq $a2, 1, funcaoCadastrarPrato	#Chamada da função de cadastro de pr
 		beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
 #-------------------------------------------------Cadastrar Prato----------------------------------------------------------------------------------
 funcaoCadastrarPrato: 	la $a0, digiteNomePrato			#Carrega a label do nome do prato
 			la $a1, nomePrato			#Carrega a label que vai armazenar o nome do prato
@@ -502,7 +531,10 @@ existenciaPratoCadastro:	la $a0, arqCard					#Parâmetro com o nome do arquivo do
 				add $a0, $zero, $s0				#Salvando arquivo como parâmetro para editar o prato escolhido
 				add $a3, $zero, $zero				#Inicializando a condição de parada
 				la $s1, nomePrato				#Carrega o nome do prato que está sendo proucurado
+				jal stringLen
 				j procedimentoBuscaCPrato
+			
+
 					
 procedimentoBuscaCPrato:	beq $v0, $zero, armazenamentoPrato	    	# se v0 == 0 achou fim do arquivo, então o prato não foi cadastrado
 				la $a1, pratoGuardar				#Especificando onde os caracteres vão estar
@@ -524,6 +556,8 @@ procedimentoBuscaCPrato:	beq $v0, $zero, armazenamentoPrato	    	# se v0 == 0 ac
 				j procedimentoBuscaCPrato			#Recomeça com a próxima iteração
 			
 armazenamentoPrato:	jal fecharArquivo		#Fechando arquivo
+
+
 			la $a0, arqCard			#Parâmetro com o nome do arquivo do cárdapio
 			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
 			addi $a2, $zero, 0 		#Não sei o que é mode
@@ -698,40 +732,62 @@ escolhacliente:	beq $a2, 1, cadastrarCliente		#Chamada da função de cadastro de 
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
-cadastrarCliente: 	la $a0, digitenome		#Carrega a label do nome do cliente
-			la $a1, nome			#Carrega a label que vai armazenar o nome do cliente
+cadastrarCliente: 	la $a0, digitenomeCliente	#Carrega a label do nome do cliente
+			la $a1, nomeCliente			#Carrega a label que vai armazenar o nome do cliente
 			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
 			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
 			add $a0, $zero, $v0
 			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-			la $a0, digitecpf	
-			la $a1, cpf	
+			
+			la $a0, digitecpf		#Carrega a label do nome CPF
+			la $a1, cpf			#Carrega a label do CPF
 			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
 			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
 			add $a0, $zero, $v0
-			jal verificacaoString				
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+		
+			la $a0, digitepref		#Carrega a label do nome da preferencia
+			la $a1, preferencia		#Carrega a label da preferencia
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+					
 			la $a0, arqClien		#Parâmetro com o nome do arquivo do cliente
 			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
 			addi $a2, $zero, 0 		
 			jal abrirArquivo		#Chamada da função de abrir arquivo
 			add $a0, $v0, $zero		#Pegando o arquivo retornado
+			
 			la $a1, cpf			#Passar o nome do cliente como parâmetro
 			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar o novo prato no 
-			la $a1, nome			#Passar o nome do cliente como parâmetro
+			jal guardarEmArquivo		#Chamando função para guardar o CPF no arquivo 
+			
+			la $a1, nomeCliente		#Passar o nome do cliente como parâmetro
 			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
+			jal guardarEmArquivo		#Chamando função para guardar nome do cliente arquivo
+			
+			la $a1, preferencia		#Passar o nome da preferencia como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar a preferencia no arquivo 
+			
 			jal fecharArquivo		#Chamando função pra fechar arquivo
+			j telaSucesso			#Cadastro bem sucedido
 			j exit	
+		
 	
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------------------------Remover Cliente------------------------------------------------------------------------------------
 removerCliente:	nop
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Editar Cliente------------------------------------------------------------------------------------
-editarCliente:	nop
+#--------------------------------------------------Edita Cliente------------------------------------------------------------------------------------
+editarCliente: 	nop
 
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------------Buscar Cliente-----------------------------------------------------------------------------
+buscaCliente:	nop
+						
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #--------------------------------------------------Visualizar Cliente------------------------------------------------------------------------------------
 visualizarCliente: nop
@@ -741,6 +797,103 @@ visualizarCliente: nop
 cadastrarReserva: nop
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#===========================================================FIM DO CLIENTE=======================================================================
+
+#===========================================================FUNCIONARIO===============================================================================
+#-------------------------------------------------ESCOLHA----------------------------------------------------------------------------------
+escolhaFuncionario:	beq $a2, 1, contratarFuncionario	#Chamada da função de cadastro de cliente escolhida
+			beq $a2, 2, demitirFuncionario		#Chamada da funcao de remoção de cliente escolhida
+			beq $a2, 3, atualizarFuncionario	#Chamada da função de edição de cliente escolhida
+			beq $a2, 4, visualizarFuncionario	#Chamada da função de visualização de cliente escolhida
+			beq $a2, 5, folhadePag		        #Chamada da função de cadastrar reserva escolhida
+			beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
+			
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------CONTRATAR FUNCIONARIO------------------------------------------------------------------------------------
+contratarFuncionario: 	la $a0, digitenomeFun		#Carrega a label do nome do funcionario
+			la $a1, nomeFun			#Carrega a label que vai armazenar o nome do funcionario
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			
+			la $a0, digitecpffun		#Carrega a label do nome CPF do funcionario
+			la $a1, cpffun			#Carrega a label do CPF do funcionario
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			
+			la $a0, digiteidade		#Carrega a label do valor da idade
+			la $a1, idade			#Carrega a label da idade
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+		
+			la $a0, digitefuncao		#Carrega a label do nome da função do funcionario
+			la $a1, funcao			#Carrega a label da funcao
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+			
+			la $a0, digitesalario		#Carrega a label do nome do salario
+			la $a1, salario			#Carrega a label do salario
+			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
+			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0
+			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
+					
+			la $a0, arqFun			#Parâmetro com o nome do arquivo do funcionario
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $a0, $v0, $zero		#Pegando o arquivo retornado
+			
+			la $a1, nomeFun			#Passar o nome do funcionario como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o nome no arquivo 
+			
+			la $a1, cpffun			#Passar CPF do funcionario como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar CPF do funcionario arquivo
+			
+			la $a1, idade			#Passar CPF do funcionario como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar CPF do funcionario arquivo
+			
+			la $a1, funcao			#Passar o nome da funcao como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar a funcao no arquivo 
+			
+			la $a1, salario			#Passar o valor de salario como parâmetro
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
+			jal guardarEmArquivo		#Chamando função para guardar o salario no arquivo 
+			
+			jal fecharArquivo		#Chamando função pra fechar arquivo
+			j telaSucesso			#Cadastro bem sucedido
+			j exit	
+		
+	
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------DEMITIR FUNCIONARIO------------------------------------------------------------------------------------
+demitirFuncionario:	nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------ATUALIZAR FUNCIONARIO------------------------------------------------------------------------------------
+atualizarFuncionario: 	nop
+						
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Visualizar FUNCIONARIO------------------------------------------------------------------------------------
+visualizarFuncionario: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#--------------------------------------------------Calcular folha de pagamento do FUNCIONARIO-----------------------------------------------------------------------
+folhadePag: nop
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#===========================================================FIM DO FUNCIONARIO=======================================================================
 
 #======================================================Classe pedidos===============================================================================
 #-------------------------------------------------Acao Pedidos----------------------------------------------------------------------------------
@@ -753,7 +906,7 @@ acaoPedido:	beq $a2, 1, funcaoCadastrarPedido	#Chamada da função de cadastro de 
 
 #----------------------------------------------------Cadastrar pedidos----------------------------------------------------------------------------
 funcaoCadastrarPedido:	la $a0, digiteNomePratoPedido		#Carrega a label do nome do prato
-			la $a1, digiteNomePrato			#Carrega a label que vai armazenar o nome do prato
+			la $a1, pratoPedido			#Carrega a label que vai armazenar o nome do prato
 			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
 			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
 			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
@@ -770,8 +923,61 @@ funcaoCadastrarPedido:	la $a0, digiteNomePratoPedido		#Carrega a label do nome d
 			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
 			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
 			jal verificacaoString			#Verificando o preco do prato?
-			j existenciaPratoCadastro		#Vai pra função que verifica se o prato já foi cadastrado
 
+			la $s1, pratoPedido			#Preparando o nome do prato para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do nome do prato buscado
+			la $a0, arqCard				#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada 
+			la $s3, pratoPedido			#Passando o nome do prato buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do prato no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+		
+			la $s1, clienteQuePediu			#Preparando o nome do cliente que pediu para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do nome do prato buscado
+			la $a0, arqClien			#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada 
+			la $s3, clienteQuePediu			#Passando o nome do cliente que pediu buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do prato no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+					
+armazenarPedido:	la $a0, arqPed			#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			add $a0, $zero, $s0		#Colocando FD como argumento
+			la $a1, pratoPedido		#Passar o nome do prato como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para guardar no arquivo
+			jal guardarEmArquivo		#Chamando função para guardar o nome do prato no arquivo
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
+			la $a1, clienteQuePediu		#Passando o preco do prato como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar o preco do prato no arquivo
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo
+			la $a1,	 dataPedido		#Passar o nome do prato como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para guardar no arquivo
+			jal guardarEmArquivo		#Chamando função para guardar o nome do prato no arquivo
+			la $a1, quebraLinha		#Passar a quebra de linha como parâmetro para indicar que o objeto rpato foi armazenado
+			add $a2, $zero, 2		#Escolhendo a quantidade máxima de caracteres para a quebra de linha
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
+			jal fecharArquivo		#Chamando função pra fechar arquivo
+			j telaSucesso				
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #-------------------------------------------------------Função remover prato-----------------------------------------------------------------------
@@ -789,4 +995,3 @@ retornaMain: j Main
 ok: jr $ra	#Temporário!
 
 exit: nop
-	
