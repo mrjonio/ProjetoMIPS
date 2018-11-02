@@ -1,6 +1,6 @@
 .data
 	#Menu Principal:
-	titulo: .asciiz "Escolha uma opção \n 1 - Clientes \n 2 - Pratos \n 3 - Funcionarios \n 4 - Mesa \n 5 - Pedidos \n"
+	titulo: .asciiz "Escolha uma opção \n 1 - Clientes \n 2 - Pratos \n 3 - Funcionarios \n 4 - Mesa \n 5 - Pedidos \n 6 - Sair"
 	
 	#Label: Exception: DadoInvalido
 	error: .asciiz "Dados inválidos!!!"
@@ -25,7 +25,7 @@
 	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Retornar para o Menu Principal"
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
-	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Apagar(Cancelar) um pedido \n 3 - Refazer um pedido \n 4 - Retornar para o Menu Principal"
+	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Retornar para o Menu Principal"
 	#fim dos subMenus.
 	
 	#Parametros (labels de pedido):
@@ -115,7 +115,7 @@ Main:
 	add $a2, $zero, $v0	#Adicionando a opção escolhida para passar como parâmetro para a verificação
 	add $a3, $zero, $v1	#Adicionando o status para verificar se deu tudo certo 
 	addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
-	addi $a1, $zero, 5	#Parâmetro pra saber se a opção escolhida é menor ou igual a 5
+	addi $a1, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 5
 	jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 5 [ verificacao(0, 5) ]
 	add $a0, $zero, $v0	#Parâmetro para verificar qual o subMenu escolhido
 	j subMenu		#Função apra verificar o submenu escolhido
@@ -427,6 +427,7 @@ subMenu:	beq $a0, 1, menuCliente		#Menu do cliente foi escolhido
 		beq $a0, 3, menuFuncionario	#Menu do funcionário foi escolhido
 		beq $a0, 4, menuMesa		#Menu das mesas foi escolhido
 		beq $a0, 5, menuPedidos		#Menu dos pedidos foi escolhido
+		beq $a0, 6, exit		#Sair do programa
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 #--------------------------------------------------Menu Clientes------------------------------------------------------------------------------------
@@ -483,7 +484,7 @@ menuPedidos: 	la $a0, opcaoPedido	#Carrega o menu de Pedidos
 		add $a2, $zero, $v0	#Adicionando a opção escolhida para passar como parâmetro para a verificação
 		add $a3, $zero, $v1	#Adicionando o status para verificar se deu tudo certo 
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
-		addi $a1, $zero, 8	#Parâmetro pra saber se a opção escolhida é menor ou igual a 8
+		addi $a1, $zero, 3	#Parâmetro pra saber se a opção escolhida é menor ou igual a 8
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 8 [ verificacao(0, 8) ]
 		jal acaoPedido		#Função para verificar a escolha de ação em relação aos pedidos
 		j Main			#Fim das operações com os Pedidos
