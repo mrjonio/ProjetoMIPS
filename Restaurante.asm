@@ -14,9 +14,10 @@
 	#Label: Exception: NãoEncontrado
 	naoEncontradoErro: .asciiz "Objeto não encontrado no sistema!!"
 	
-	#Label: Exception: PratoJáCadastrado
+	#Label: Exception
 	pratoJaExisteErro: .asciiz "Prato já cadastrado!!"
 	clienteJaExisteErro: .asciiz "Cliente já cadastrado!!"
+	funcionarioJaExisteErro: .asciiz "Funcionario já cadastrado!!"
 	
 	#Label: Sucesso
 	acaoBemSucedida: .asciiz "Operação finalizada com sucesso!!"
@@ -24,8 +25,8 @@
 	#SubMenus:
 	opcaoCliente: .asciiz "Escolha uma opção: \n 1 - Cadastrar um cliente \n 2 - Remover cliente \n 3 - Editar informações sobre um cliente \n 4 - Retornar para o Menu Principal"
 	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Retornar para o Menu Principal"
-	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
-	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
+	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Retornar para o Menu Principal"
+	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Retornar para o Menu principal"
 	opcaoPedido: .asciiz "Escolha uma opção: \n 1 - Registrar um pedido \n 2 - Retornar para o Menu Principal"
 	#fim dos subMenus.
 	
@@ -84,27 +85,31 @@
 	arqClien: .asciiz "cliente.txt"
 	arqClien2: .asciiz "clienteTemp.txt"
 	
-	#Parametros (labels de funcionario):
-	#Funcionario (Cadastro)
-	
-	digitenomeFun: .asciiz "Digite o nome do funcionario: \n"
-	digitecpffun: .asciiz "Digite o CPF do funcionario:: \n"
-	digiteidade: .asciiz "Digite a idade do funcionario: \n"
-	digitefuncao: .asciiz "Digite a função: \n - Gerente \n - Cozinheiro \n - Caixa \n - Atendente \n - Motoboy \n - Faxineiro \n - Segurança"
-	digitesalario: .asciiz "Digite o salario do funcionario: \n"
-	
+	#Parametros (labels de Funcionario):
+	#Funcionario
+
+	digiteCPFFunc: .asciiz "Digite o CPF do funcionario:: \n"
+	digiteCPFFuncBuscado: .asciiz "Digite o CPF do Funcionario para editar: \n"
+	digiteCPFFuncRemover: .asciiz "Digite o CPF do Funcionario que será demitido: \n"
+	digitenomeFunc: .asciiz "Digite o nome do funcionario: \n"
+	digiteidadeFunc: .asciiz "Digite a idade do funcionario: \n"
+	digiteFuncaoFunc: .asciiz "Digite a função: \n - Gerente \n - Cozinheiro \n - Caixa \n - Atendente \n - Motoboy \n - Faxineiro \n - Segurança"
+	digiteSalarioFunc: .asciiz "Digite o salario do funcionario: \n"
 	
 	#Parametros (Labels de armazenamento)
-	#Funcionario (Cadastro)
-	nomeFun: .space 20
-	cpffun: .space 20
-	idade: .space 20
-	funcao: .space 20
-	salario: .space 20
-	
+	#Funcionario
+	cpfFuncGuardar: .space 2
+	nomeFunc: .space 20
+	cpfFunc: .space 20
+	funcaoFunc: .space 20
+	idadeFunc: .space 20
+	salarioFunc: .space 20
+	cpfFuncProucurado: .space 20
+
 	#Nomes dos arquivos
 	#Funcionario
-	arqFun: .asciiz "funcionario.txt"
+	arqFunc: .asciiz "funcionario.txt"
+	arqFunc2: .asciiz "funcionarioTemp.txt"
 	
 	#Labels auxiliares
 	virgula: .asciiz ";"
@@ -423,6 +428,14 @@ pratoJaCadastrado:	jal fecharArquivo			#Fechando o arquivo que estava sendo usad
 clienteJaCadastrado:	jal fecharArquivo			#Fechando o arquivo que estava sendo usado (pra não dar problemas depois)
 			addi $a1, $zero, 2			#Escolhendo tela de erro
 			la $a0, clienteJaExisteErro		#Carregando a label que diz o erro
+			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
+			jal printf				#Chamando o print [ printf( error) ]
+			j Main					#Fim do tratamento da exceção		
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#---------------------------------------------Erro: Funcionario já cadastrado!!----------------------------------------------------------------------
+funcionarioJaCadastrado:jal fecharArquivo			#Fechando o arquivo que estava sendo usado (pra não dar problemas depois)
+			addi $a1, $zero, 2			#Escolhendo tela de erro
+			la $a0, funcionarioJaExisteErro		#Carregando a label que diz o erro
 			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
 			jal printf				#Chamando o print [ printf( error) ]
 			j Main					#Fim do tratamento da exceção		
@@ -1060,7 +1073,7 @@ finalizarRemocaoCliente: jal fecharArquivo		#Fechando o arquivo de leitura
 			addi $a2, $zero, 0 		#Não sei o que é mode
 			jal abrirArquivo		#Chamada da função de abrir arquivo
 			jal fecharArquivo		#Fechando o arquivo
-			j Main
+			j telaSucesso
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #-------------------------------------------------Editar Cliente----------------------------------------------------------------------------------
@@ -1099,99 +1112,408 @@ funcaoEditarCliente: 	la $a0, digiteCPFClienteBuscado		#Carrega a label do nome 
 
 #===========================================================FUNCIONARIO===============================================================================
 #-------------------------------------------------ESCOLHA----------------------------------------------------------------------------------
-escolhaFuncionario:	beq $a2, 1, contratarFuncionario	#Chamada da função de cadastro de cliente escolhida
-			beq $a2, 2, demitirFuncionario		#Chamada da funcao de remoção de cliente escolhida
-			beq $a2, 3, atualizarFuncionario	#Chamada da função de edição de cliente escolhida
-			beq $a2, 4, visualizarFuncionario	#Chamada da função de visualização de cliente escolhida
-			beq $a2, 5, folhadePag		        #Chamada da função de cadastrar reserva escolhida
-			beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
+escolhaFuncionario:	beq $a2, 1, funcaoCadastrarFunc	#Chamada da função de cadastro de cliente escolhida
+			beq $a2, 2, funcaoRemoverFunc		#Chamada da funcao de remoção de cliente escolhida
+			beq $a2, 3, funcaoEditarFunc	#Chamada da função de edição de cliente escolhida
+			beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
 			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------CONTRATAR FUNCIONARIO------------------------------------------------------------------------------------
-contratarFuncionario: 	la $a0, digitenomeFun		#Carrega a label do nome do funcionario
-			la $a1, nomeFun			#Carrega a label que vai armazenar o nome do funcionario
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-			
-			la $a0, digitecpffun		#Carrega a label do nome CPF do funcionario
-			la $a1, cpffun			#Carrega a label do CPF do funcionario
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-			
-			la $a0, digiteidade		#Carrega a label do valor da idade
-			la $a1, idade			#Carrega a label da idade
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-		
-			la $a0, digitefuncao		#Carrega a label do nome da função do funcionario
-			la $a1, funcao			#Carrega a label da funcao
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-			
-			la $a0, digitesalario		#Carrega a label do nome do salario
-			la $a1, salario			#Carrega a label do salario
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-					
-			la $a0, arqFun			#Parâmetro com o nome do arquivo do funcionario
-			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
-			addi $a2, $zero, 0 		
+#--------------------------------------------------------Buscar Funcionario-----------------------------------------------------------------------------
+buscaFunc:		la $s1, cpfFuncProucurado		#Preparando o cpf do funcionario para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do CPF do cliente buscado
+			la $a0, arqFunc			#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada
+			la $s3, cpfFuncProucurado		#Passando o CPF do funcionario buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do cliente no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqFunc				#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqFunc2			#Abrindo o segundo arquivo (armazenamento temporário)
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoEdicaoFunc			#Começa a passagem dos caracteres para o próximo arquivo
+
+rebobinarEdicaoFunc:	add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoEdicaoFunc	#Voltando ao processo original
+
+processoEdicaoFunc: 	beq $a2, $a3, prepararParaExcluirFunc		#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, editandoNoArquivoFunc		#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoEdicaoFunc				#Próxima iteração
+
+prepararParaExcluirFunc:addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j excluirObjetoFunc				#Indo para a função de retirada do objeto
+
+excluirObjetoFunc:	beq $a2, 106, rebobinarEdicaoFunc		#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j excluirObjetoFunc				#Proxima iteração
+
+editandoNoArquivoFunc:	jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqFunc			#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
 			jal abrirArquivo		#Chamada da função de abrir arquivo
-			add $a0, $v0, $zero		#Pegando o arquivo retornado
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqFunc			#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			la $a0, arqFunc2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j guardarDadosAntigosFunc	#Iniciando função para guardar tudo de novo no arquivo
+
+guardarDadosAntigosFunc:	beq $v0, 0, finalizarEdicaoFunc	#Se todos os caracteres foram lidos, então finaliza a edição
+				add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+				la $a1, cpfClienteGuardar	#Especificando que vou guardar o caracter lido aqui
+				add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+				jal lerDoArquivo 		#Lendo rs
+				add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+				add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+				la $a1, cpfFuncGuardar		#Lendo o caracter que foi lido
+				addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+				jal guardarEmArquivo		#Guardando cada caracter um por um
+				add $v0, $zero, $t0		#Pegando de volta o valor de t0
+				j guardarDadosAntigosFunc	#Proxima iteração
+
+finalizarEdicaoFunc: 	jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqFunc2		#Parâmetro com o nome do arquivo do funcionario (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j armazenamentoFunc		#Armazenando o funcionario editado
+			j exit
 			
-			la $a1, nomeFun			#Passar o nome do funcionario como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar o nome no arquivo 
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#-------------------------------------------------Cadastrar Funcionario----------------------------------------------------------------------------------
+funcaoCadastrarFunc:	 la $a0, digiteCPFFunc			#Carrega a label do CPF do funcionario
+			la $a1, cpfFunc				#Carrega a label que vai armazenar o cpf do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digitenomeFunc			#Carrega a label do nome do funcionario
+			la $a1, nomeFunc			#Carrega a label que vai armazenar o nome do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteidadeFunc			#Carrega a label do da idade do funcionario
+			la $a1, idadeFunc			#Carrega a label que vai armazenar a idade do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
 			
-			la $a1, cpffun			#Passar CPF do funcionario como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar CPF do funcionario arquivo
+			la $a0, digiteFuncaoFunc			#Carrega a label do da funçao do funcionario
+			la $a1, funcaoFunc			#Carrega a label que vai armazenar a função do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
 			
-			la $a1, idade			#Passar CPF do funcionario como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar CPF do funcionario arquivo
+			la $a0, digiteSalarioFunc		#Carrega a label do salario do funcionario
+			la $a1, salarioFunc			#Carrega a label que vai armazenar o salario do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			j existenciaFuncCadastro		#Vai pra função que verifica se o funcionario já foi cadastrado antes
+
+existenciaFuncCadastro:		la $a0, arqFunc				#Parâmetro com o nome do arquivo do funcionario
+				add $a1, $zero, $zero				#Especificando que quero ler o arquivo
+				add $a2, $zero, $zero 				#Não sei o que é mode
+				jal abrirArquivo				#Chamada da função de abrir arquivo
+				add $s0, $v0, $zero				#Pegando o arquivo retornado
+				add $a0, $zero, $s0				#Salvando arquivo como parâmetro para editar o prato escolhido
+				add $a3, $zero, $zero				#Inicializando a condição de parada
+				la $s1, cpfFunc					#Carrega o CPF do funcionario que está sendo proucurado
+				j procedimentoBuscaFunc
+
+
+
+procedimentoBuscaFunc:		beq $v0, $zero, armazenamentoFunc	    	# se v0 == 0 achou fim do arquivo, então o funcionario não foi cadastrado
+				la $a1, cpfFuncGuardar				#Especificando onde os caracteres vão estar
+				beq $a3, 20, funcionarioJaCadastrado		#Condição, if a3 == 22, então encontrou o funcionario
+				add $t0, $zero, $a2				#Salvando o indice atual (caso os caracteres estejam sendo iguais)
+				addi $a2, $zero, 1 				#Quantidade de caracteres lidos
+				jal lerDoArquivo				#Chamada da função de ler o arquivo
+				la $s2, cpfFuncGuardar				#Carrega o caracter lido
+				addi $a3, $a3, 1				#Incrementa o valor de a3 pra saber se o cliente foi encontrado
+				add $a2, $zero, $t0				#Volta o valor do indice para a2
+				lb $t1, ($s1)					#Carrega o caracter de indice a2 do nome passado
+				lb $t2, ($s2)					#Carrega o caracter lido do arquivo
+				addi $a2, $a2, 1				#Incrementa o indice
+				addi $s1, $s1, 1				#incrementa o indice de s1 pra pegar o proximo caracter do nome passado
+				beq $t2, $t1, procedimentoBuscaFunc		#Verifica se o caracter lido é o mesmo da posição a2 do CPF do funcionario, se sim avança pro próximo car
+				sub $s1, $s1, $a2				#Se os caracteres forem diferentes, zero o indice do cpf do funcionario
+				sub $a2, $a2, $a2 				#Se não for o mesmo, zero o indice e recomeça
+				sub $a3, $a3, $a3				#Condição, if a3 == 22, então encontrou o funcionario
+				j procedimentoBuscaFunc			#Recomeça com a próxima iteração
+
+armazenamentoFunc:	jal fecharArquivo		#Fechando arquivo
+
+
+			la $a0, arqFunc			#Parâmetro com o nome do arquivo do funcionario
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			add $a0, $zero, $s0		#Colocando FD como argumento
+
+			la $a1, cpfFunc			#Passar o CPF do funcionario como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para guardar no arquivo
+			jal guardarEmArquivo		#Chamando função para guardar o CPF do cliente no arquivo
+
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
+
+			la $a1, nomeFunc		#Passando o nome do funcionario como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar o nome do cliente no arquivo
+
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
+
+			la $a1, idadeFunc		#Passando a idade do funcionario como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar a preferencia do cliente no arquivo
+
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
 			
-			la $a1, funcao			#Passar o nome da funcao como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar a funcao no arquivo 
+			la $a1, funcaoFunc		#Passando a funçao do funcionario como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar a preferencia do cliente no arquivo
 			
-			la $a1, salario			#Passar o valor de salario como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar o salario no arquivo 
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
 			
+			la $a1, salarioFunc		#Passando o salario do funcionario como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar a preferencia do cliente no arquivo
+			
+			la $a1, quebraLinha		#Passar a quebra de linha como parâmetro para indicar que o objeto rpato foi armazenado
+			add $a2, $zero, 2		#Escolhendo a quantidade máxima de caracteres para a quebra de linha
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
 			jal fecharArquivo		#Chamando função pra fechar arquivo
 			j telaSucesso			#Cadastro bem sucedido
-			j exit	
-		
-	
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------DEMITIR FUNCIONARIO------------------------------------------------------------------------------------
-demitirFuncionario:	nop
+			j exit
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------ATUALIZAR FUNCIONARIO------------------------------------------------------------------------------------
-atualizarFuncionario: 	nop
-						
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Visualizar FUNCIONARIO------------------------------------------------------------------------------------
-visualizarFuncionario: nop
+#-------------------------------------------------Remover Funcionario----------------------------------------------------------------------------------
+funcaoRemoverFunc:	la $a0, digiteCPFFuncBuscado		#Carrega a label do nome CPF do funcionario buscado
+			la $a1, cpfFuncProucurado		#Carrega a label que vai armazenar o CPF do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			
+			la $s1, cpfFuncProucurado		#Preparando o cpf do funcionario para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do CPF do cliente buscado
+			la $a0, arqFunc				#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada
+			la $s3, cpfFuncProucurado		#Passando o CPF do funcionario buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do cliente no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqFunc				#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqFunc2			#Abrindo o segundo arquivo (armazenamento temporário)
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoRemocaoFunc			#Começa a passagem dos caracteres para o próximo arquivo
 
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Calcular folha de pagamento do FUNCIONARIO-----------------------------------------------------------------------
-folhadePag: nop
+rebobinarRemocaoFun:	add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoRemocaoFunc	#Voltando ao processo original
 
+processoRemocaoFunc:	 beq $a2, $a3, prepararParaRemoverFunc		#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, removendoNoArquivoFunc		#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoRemocaoFunc				#Próxima iteração
+
+prepararParaRemoverFunc:addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j removerObjetoFunc				#Indo para a função de retirada do objeto
+
+removerObjetoFunc:	beq $a2, 106, rebobinarRemocaoFun		#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j removerObjetoFunc				#Proxima iteração
+
+removendoNoArquivoFunc:jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqFunc			#Parâmetro com o nome do arquivo do funcionario
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqFunc			#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			la $a0, arqFunc2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j removerDadosAntigosFunc	#Iniciando função para guardar tudo de novo no arquivo
+
+removerDadosAntigosFunc:	beq $v0, 0, finalizarRemocaoFunc	#Se todos os caracteres foram lidos, então finaliza a edição
+				add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+				la $a1, cpfFuncGuardar		#Especificando que vou guardar o caracter lido aqui
+				add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+				jal lerDoArquivo 		#Lendo rs
+				add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+				add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+				la $a1, cpfFuncGuardar		#Lendo o caracter que foi lido
+				addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+				jal guardarEmArquivo		#Guardando cada caracter um por um
+				add $v0, $zero, $t0		#Pegando de volta o valor de t0
+				j removerDadosAntigosFunc	#Proxima iteração
+
+finalizarRemocaoFunc:	 jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqFunc2		#Parâmetro com o nome do arquivo do cárdapio (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j telaSucesso	
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#===========================================================FIM DO FUNCIONARIO=======================================================================
+#-------------------------------------------------Editar Funcionario----------------------------------------------------------------------------------
+funcaoEditarFunc: 	la $a0, digiteCPFFuncBuscado		#Carrega a label do nome CPF do funcionario buscado
+			la $a1, cpfFuncProucurado		#Carrega a label que vai armazenar o CPF do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteCPFFunc			#Carrega a label do CPF do funcionario
+			la $a1, cpfCliente			#Carrega a label que vai armazenar o CPF do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digitenomeFunc			#Carrega a label do nome do funcionario
+			la $a1, nomeFunc			#Carrega a label que vai armazenar o nome do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteidadeFunc			#Carrega a label do da idade do funcionario
+			la $a1, idadeFunc			#Carrega a label que vai armazenar a idade do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			
+			la $a0, digiteFuncaoFunc		#Carrega a label do da funçao do funcionario
+			la $a1, funcaoFunc			#Carrega a label que vai armazenar a função do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			
+			la $a0, digiteSalarioFunc		#Carrega a label do salario do funcionario
+			la $a1, salarioFunc			#Carrega a label que vai armazenar o salario do funcionario
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			j buscaFunc
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#===========================================================FIM DO FUNCIONARO=======================================================================
+
 #======================================================Classe pedidos===============================================================================
 #-------------------------------------------------Acao Pedidos----------------------------------------------------------------------------------
 acaoPedido:	beq $a2, 1, funcaoCadastrarPedido	#Chamada da função de cadastro de pedidos escolhida
