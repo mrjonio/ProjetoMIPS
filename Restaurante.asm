@@ -16,12 +16,13 @@
 	
 	#Label: Exception: PratoJáCadastrado
 	pratoJaExisteErro: .asciiz "Prato já cadastrado!!"
+	clienteJaExisteErro: .asciiz "Cliente já cadastrado!!"
 	
 	#Label: Sucesso
 	acaoBemSucedida: .asciiz "Operação finalizada com sucesso!!"
 	
 	#SubMenus:
-	opcaoCliente: .asciiz "Escolha uma opção: \n 1 - Cadastrar um novo Cliente \n 2 - Remover um Cliente \n 3 - Atualizar informações de um cliente \n 4 - Visualizar informações de um cliente \n 5 - Fazer reserva para um cliente \n 6 - Retornar para o Menu Principal"
+	opcaoCliente: .asciiz "Escolha uma opção: \n 1 - Cadastrar um cliente \n 2 - Remover cliente \n 3 - Editar informações sobre um cliente \n 4 - Retornar para o Menu Principal"
 	opcaoCardapio: .asciiz "Escolha uma opção: \n 1 - Adicionar novo prato ao cardápio \n 2 - Retirar um prato do cardápio \n 3 - Editar informações sobre um prato \n 4 - Retornar para o Menu Principal"
 	opcaoFuncionario: .asciiz "Escolha uma opção: \n 1 - Contratar novo funcionário \n 2 - Demitir um funcionário \n 3 - Atualizar informações de um funcionário \n 4 - Visualizar informações de um funcionário \n 5 - Calcular folha de pagamento \n 6 - Retornar para o Menu Principal"
 	opcaoMesa: .asciiz "Escolha uma opção: \n 1 - Adicionar Mesa \n 2 - Retirar Mesa \n 3 - Mudar status da mesa \n 4 - Visualizar informações de uma Mesa \n 5 - Confirmar Reserva \n 6 - Limpar uma mesa \n 7 - Retornar para o Menu principal"
@@ -62,21 +63,26 @@
 	arqPed2: .asciiz "pedidosTemp.txt"
 	
 	#Parametros (labels de cliente):
-	#Cliente (Cadastro)
-	
-	digitenomeCliente: .asciiz "Digite o nome do cliente: \n"
-	digitecpf: .asciiz "Digite o CPF do cliente:: \n"
-	digitepref: .asciiz "Digite sua Preferência: \n Ex: Onivoro ou Vegetariano"
+	#Cliente
+
+	digiteCPFCliente: .asciiz "Digite o CPF do cliente: "
+	digiteCPFClienteBuscado: .asciiz "Digite o CPF do Cliente para editar: "
+	digiteCPFClienteRemover: .asciiz "Digite o CPF do Cliente que será removido: "
+	digiteNomeCliente: .asciiz "Digite o nome do Cliente: "
+	digitePrefCliente: .asciiz "Digite sua Preferência: \n Ex: Onivoro ou Vegetariano"
 	
 	#Parametros (Labels de armazenamento)
-	#Cliente (Cadastro)
+	#Cliente
+	cpfClienteGuardar: .space 2
 	nomeCliente: .space 20
-	cpf: .space 20
-	preferencia: .space 20
+	cpfCliente: .space 20
+	prefCliente: .space 20
+	cpfClienteProucurado: .space 20
 	
 	#Nomes dos arquivos
 	#Cliente
 	arqClien: .asciiz "cliente.txt"
+	arqClien2: .asciiz "clienteTemp.txt"
 	
 	#Parametros (labels de funcionario):
 	#Funcionario (Cadastro)
@@ -86,6 +92,7 @@
 	digiteidade: .asciiz "Digite a idade do funcionario: \n"
 	digitefuncao: .asciiz "Digite a função: \n - Gerente \n - Cozinheiro \n - Caixa \n - Atendente \n - Motoboy \n - Faxineiro \n - Segurança"
 	digitesalario: .asciiz "Digite o salario do funcionario: \n"
+	
 	
 	#Parametros (Labels de armazenamento)
 	#Funcionario (Cadastro)
@@ -98,7 +105,6 @@
 	#Nomes dos arquivos
 	#Funcionario
 	arqFun: .asciiz "funcionario.txt"
-	
 	
 	#Labels auxiliares
 	virgula: .asciiz ";"
@@ -413,6 +419,15 @@ pratoJaCadastrado:	jal fecharArquivo			#Fechando o arquivo que estava sendo usad
 			jal printf				#Chamando o print [ printf( error) ]
 			j Main					#Fim do tratamento da exceção
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#---------------------------------------------Erro: Cliente já cadastrado!!----------------------------------------------------------------------
+clienteJaCadastrado:	jal fecharArquivo			#Fechando o arquivo que estava sendo usado (pra não dar problemas depois)
+			addi $a1, $zero, 2			#Escolhendo tela de erro
+			la $a0, clienteJaExisteErro		#Carregando a label que diz o erro
+			addi $a2, $zero, 55			#Escolhendo a tela de mensagens
+			jal printf				#Chamando o print [ printf( error) ]
+			j Main					#Fim do tratamento da exceção		
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
 #---------------------------------------------Sucesso: Ação concluida!---------------------------------------------------------------------
 telaSucesso:		addi $a1, $zero, 1			#Escolhendo tela de erro
 			la $a0, acaoBemSucedida			#Carregando a label que diz sucesso
@@ -438,7 +453,7 @@ menuCliente: 	la $a0, opcaoCliente	#Carrega o menu do cliente
 		addi $a0, $zero, 0	#Parâmetro pra saber se a opção escolhido é maior que 0
 		addi $a1, $zero, 6	#Parâmetro pra saber se a opção escolhida é menor ou igual a 6
 		jal verificacao		#Função que verifica se a opção escolhida é um número entre 1 e 6 [ verificacao(0, 6) ]
-		jal escolhacliente
+		jal acaoCliente
 		j Main			#Fim das operações com o cliente(s)
 		
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -723,81 +738,363 @@ funcaoEditarPrato: 	la $a0, digiteNomePratoBuscado		#Carrega a label do nome do 
 #===========================================================FIM DO CÁRDAPIO=======================================================================
 
 #===========================================================CLIENTE===============================================================================
-#-------------------------------------------------ESCOLHA----------------------------------------------------------------------------------
-escolhacliente:	beq $a2, 1, cadastrarCliente		#Chamada da função de cadastro de cliente escolhida
-		beq $a2, 2, removerCliente		#Chamada da funcao de remoção de cliente escolhida
-		beq $a2, 3, editarCliente		#Chamada da função de edição de cliente escolhida
-		beq $a2, 4, visualizarCliente		#Chamada da função de visualização de cliente escolhida
-		beq $a2, 5, cadastrarReserva	        #Chamada da função de cadastrar reserva escolhida
-		beq $a2, 6, retornaMain			#Retornar para menu principal escolhido
-			
+#-------------------------------------------------AÇÃO Cliente----------------------------------------------------------------------------------
+acaoCliente:	beq $a2, 1, funcaoCadastrarCliente	#Chamada da função de cadastro de cliente escolhida
+		beq $a2, 2, funcaoRemoverCliente	#Chamada da funcao de remoção de cliente escolhida
+		beq $a2, 3, funcaoEditarCliente		#Chamada da função de edição de cliente escolhida
+		beq $a2, 4, retornaMain			#Retornar para menu principal escolhido
+
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Cadastrar Cliente------------------------------------------------------------------------------------
-cadastrarCliente: 	la $a0, digitenomeCliente	#Carrega a label do nome do cliente
+#--------------------------------------------------------Buscar cliente-----------------------------------------------------------------------------
+buscaCliente:		la $s1, cpfClienteProucurado		#Preparando o cpf do cliente para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do CPF do cliente buscado
+			la $a0, arqClien			#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada
+			la $s3, cpfClienteProucurado		#Passando o CPF do cliente buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do cliente no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqClien			#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqClien2			#Abrindo o segundo arquivo (armazenamento temporário)
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoEdicaoCliente			#Começa a passagem dos caracteres para o próximo arquivo
+
+rebobinarEdicaoCliente:	add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoEdicaoCliente	#Voltando ao processo original
+
+processoEdicaoCliente: 	beq $a2, $a3, prepararParaExcluirCliente	#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, editandoNoArquivoCliente		#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoEdicaoCliente				#Próxima iteração
+
+prepararParaExcluirCliente:addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j excluirObjetoCliente				#Indo para a função de retirada do objeto
+
+excluirObjetoCliente:	beq $a2, 64, rebobinarEdicaoCliente		#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j excluirObjetoCliente				#Proxima iteração
+
+editandoNoArquivoCliente:jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqClien		#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqClien		#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			la $a0, arqClien2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j guardarDadosAntigosCliente	#Iniciando função para guardar tudo de novo no arquivo
+
+guardarDadosAntigosCliente:	beq $v0, 0, finalizarEdicaoCliente	#Se todos os caracteres foram lidos, então finaliza a edição
+				add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+				la $a1, cpfClienteGuardar	#Especificando que vou guardar o caracter lido aqui
+				add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+				jal lerDoArquivo 		#Lendo rs
+				add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+				add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+				la $a1, cpfClienteGuardar	#Lendo o caracter que foi lido
+				addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+				jal guardarEmArquivo		#Guardando cada caracter um por um
+				add $v0, $zero, $t0		#Pegando de volta o valor de t0
+				j guardarDadosAntigosCliente	#Proxima iteração
+
+finalizarEdicaoCliente: jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqClien2		#Parâmetro com o nome do arquivo do cárdapio (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j armazenamentoCliente		#Armazenando o prato editado
+			j exit
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#-------------------------------------------------Cadastrar Cliente----------------------------------------------------------------------------------
+funcaoCadastrarCliente: la $a0, digiteCPFCliente		#Carrega a label do CPF do cliente
+			la $a1, cpfCliente			#Carrega a label que vai armazenar o cpf do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteNomeCliente		#Carrega a label do nome do cliente
 			la $a1, nomeCliente			#Carrega a label que vai armazenar o nome do cliente
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-			
-			la $a0, digitecpf		#Carrega a label do nome CPF
-			la $a1, cpf			#Carrega a label do CPF
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-		
-			la $a0, digitepref		#Carrega a label do nome da preferencia
-			la $a1, preferencia		#Carrega a label da preferencia
-			addi $a2, $zero, 20		#Define a quantidade máxima de caracteres
-			jal chamarJanelaString		#Chama a função que mostra a tela para digitar uma string
-			add $a0, $zero, $v0
-			jal verificacaoString		#Verifica se está tudo ok com o que foi digitado
-					
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digitePrefCliente		#Carrega a label do da preferencia do cliente
+			la $a1, prefCliente			#Carrega a label que vai armazenar a preferencia do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			j existenciaClienteCadastro		#Vai pra função que verifica se o cliente já foi cadastrado antes
+
+existenciaClienteCadastro:	la $a0, arqClien				#Parâmetro com o nome do arquivo do cliente
+				add $a1, $zero, $zero				#Especificando que quero ler o arquivo
+				add $a2, $zero, $zero 				#Não sei o que é mode
+				jal abrirArquivo				#Chamada da função de abrir arquivo
+				add $s0, $v0, $zero				#Pegando o arquivo retornado
+				add $a0, $zero, $s0				#Salvando arquivo como parâmetro para editar o prato escolhido
+				add $a3, $zero, $zero				#Inicializando a condição de parada
+				la $s1, cpfCliente				#Carrega o CPF do cliente que está sendo proucurado
+				j procedimentoBuscaCliente
+
+
+
+procedimentoBuscaCliente:	beq $v0, $zero, armazenamentoCliente	    	# se v0 == 0 achou fim do arquivo, então o cliente não foi cadastrado
+				la $a1, cpfClienteGuardar			#Especificando onde os caracteres vão estar
+				beq $a3, 20, clienteJaCadastrado		#Condição, if a3 == 22, então encontrou o cliente
+				add $t0, $zero, $a2				#Salvando o indice atual (caso os caracteres estejam sendo iguais)
+				addi $a2, $zero, 1 				#Quantidade de caracteres lidos
+				jal lerDoArquivo				#Chamada da função de ler o arquivo
+				la $s2, cpfClienteGuardar			#Carrega o caracter lido
+				addi $a3, $a3, 1				#Incrementa o valor de a3 pra saber se o cliente foi encontrado
+				add $a2, $zero, $t0				#Volta o valor do indice para a2
+				lb $t1, ($s1)					#Carrega o caracter de indice a2 do nome passado
+				lb $t2, ($s2)					#Carrega o caracter lido do arquivo
+				addi $a2, $a2, 1				#Incrementa o indice
+				addi $s1, $s1, 1				#incrementa o indice de s1 pra pegar o proximo caracter do nome passado
+				beq $t2, $t1, procedimentoBuscaCliente		#Verifica se o caracter lido é o mesmo da posição a2 do CPF do cliente, se sim avança pro próximo car
+				sub $s1, $s1, $a2				#Se os caracteres forem diferentes, zero o indice do nome do prato
+				sub $a2, $a2, $a2 				#Se não for o mesmo, zero o indice e recomeça
+				sub $a3, $a3, $a3				#Condição, if a3 == 22, então encontrou o cliente
+				j procedimentoBuscaCliente			#Recomeça com a próxima iteração
+
+armazenamentoCliente:	jal fecharArquivo		#Fechando arquivo
+
+
 			la $a0, arqClien		#Parâmetro com o nome do arquivo do cliente
 			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo
-			addi $a2, $zero, 0 		
+			addi $a2, $zero, 0 		#Não sei o que é mode
 			jal abrirArquivo		#Chamada da função de abrir arquivo
-			add $a0, $v0, $zero		#Pegando o arquivo retornado
-			
-			la $a1, cpf			#Passar o nome do cliente como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar o CPF no arquivo 
-			
-			la $a1, nomeCliente		#Passar o nome do cliente como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar nome do cliente arquivo
-			
-			la $a1, preferencia		#Passar o nome da preferencia como parâmetro
-			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres
-			jal guardarEmArquivo		#Chamando função para guardar a preferencia no arquivo 
-			
+			add $s0, $zero, $v0 		#Guardando o FD
+			add $a0, $zero, $s0		#Colocando FD como argumento
+
+			la $a1, cpfCliente		#Passar o CPF do cliente como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para guardar no arquivo
+			jal guardarEmArquivo		#Chamando função para guardar o CPF do cliente no arquivo
+
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
+
+			la $a1, nomeCliente		#Passando o nome do cliente como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar o nome do cliente no arquivo
+
+			la $a1, virgula			#Passar o ponto e virgula como parâmetro
+			add $a2, $zero, 1		#Escolhendo a quantidade máxima de caracteres para o ponto e virgula
+			jal guardarEmArquivo		#Chamando função para guardar o ponto e virgula
+
+			la $a1, prefCliente		#Passando a preferencia do cliente como parâmetro para guardar no arquivo
+			add $a2, $zero, 20		#Escolhendo a quantidade máxima de caracteres para o preco do prato
+			jal guardarEmArquivo		#Chamando função para guardar a preferencia do cliente no arquivo
+
+			la $a1, quebraLinha		#Passar a quebra de linha como parâmetro para indicar que o objeto rpato foi armazenado
+			add $a2, $zero, 2		#Escolhendo a quantidade máxima de caracteres para a quebra de linha
+			jal guardarEmArquivo		#Chamando função para guardar o novo prato no arquivo
 			jal fecharArquivo		#Chamando função pra fechar arquivo
 			j telaSucesso			#Cadastro bem sucedido
-			j exit	
-		
-	
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Remover Cliente------------------------------------------------------------------------------------
-removerCliente:	nop
+			j exit
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Edita Cliente------------------------------------------------------------------------------------
-editarCliente: 	nop
+#-------------------------------------------------Remover Cliente----------------------------------------------------------------------------------
+funcaoRemoverCliente:	la $a0, digiteCPFClienteBuscado		#Carrega a label do nome CPF do cliente buscado
+			la $a1, cpfClienteProucurado		#Carrega a label que vai armazenar o CPF do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+			
+			la $s1, cpfClienteProucurado		#Preparando o cpf do cliente para saber o tamanho
+			jal stringLen				#Verificando a quantidade de caracteres do nome do prato buscado
+			add $a3, $zero, $v0			#Salvando o tamanho da string do CPF do cliente buscado
+			la $a0, arqClien			#Carregando o caminho do arquivo
+			add $a1, $zero, $zero			#Ler arquivo
+			add $a2, $zero, $zero			#nada de mode
+			jal abrirArquivo			#Abrindo o arquivo orginal
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			add $a0, $zero, $s0			#Passando o arquivo como parâmetro
+			add $a1, $zero, $a3			#Passando o parâmetro de parada
+			la $s3, cpfClienteProucurado		#Passando o CPF do cliente buscado para poder fazer as comparações
+			jal BuscarObjeto			#Buscando a posição do cliente no arquivo original
+			jal fecharArquivo			#Fechando o arquivo, para não dar probleminhas rs
+			la $a0, arqClien			#Reabrindo o arquivo rs
+			add $a1, $zero, $zero			#Quero ler o arquivo
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo
+			add $s0, $zero, $v0			#Salvando o arquivo em s0
+			la $a0, arqClien2			#Abrindo o segundo arquivo (armazenamento temporário)
+			add $a1, $zero, 9			#Escolhendo pra dar apend no arquivo temporário
+			add $a2, $zero, $zero			#Nada de mode
+			jal abrirArquivo			#Abrindo o arquivo secundario
+			add $s1, $zero, $v0			#armazenando o arquivo temporário em s1
+			add $sp, $sp, 4				#Desalocando o espaço usado na pilha
+			j processoRemocaoCliente			#Começa a passagem dos caracteres para o próximo arquivo
 
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------------Buscar Cliente-----------------------------------------------------------------------------
-buscaCliente:	nop
-						
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Visualizar Cliente------------------------------------------------------------------------------------
-visualizarCliente: nop
+rebobinarRemocaoCliente:add $t0, $zero, $a2	#Armazenando a quantidade de caracteres excluidos
+			lw $a2, 0($sp)		#Pegando o valor original do indice
+			addi $sp, $sp, 4	#Desalocando o espaço usado na pilha
+			add $a2, $a2, $t0	#Somando o indice, para saber o quanto já foi lido
+			add $a0, $zero, $s1	#Garantindo que, caso já tenha acabado o arquivo de leitura, o arquivo de escrita vai ser fechado primeiro.
+			j processoRemocaoCliente	#Voltando ao processo original
 
-#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#--------------------------------------------------Cadastrar reserva do Cliente------------------------------------------------------------------------------------
-cadastrarReserva: nop
+processoRemocaoCliente: beq $a2, $a3, prepararParaRemoverCliente	#Se tiver chegado na posição do objeto que vai ser editado, então vamos edita-lo
+			beq $v0, 0, removendoNoArquivoCliente		#Se v0 = 0, então acabaram os caracteres do arquivo, podemos terminar de editar
+			add $t1, $zero, $a2				#Guardando temporariamente a posição do objeto no arquivo
+			la $a1, byte					#Escolhendo a label onde os caracteres vão ficar
+			add $a0, $zero, $s0				#Pegando o arquivo para pegar o próximo caracter que será lido
+			jal lerDoArquivo				#Lendo do arquivo
+			add $t4, $zero, $v0				#Armazenando a posição do FD temporariamente
+			add $a0, $zero, $s1				#Agora pegando o arquivo para escrever o próximo caracter
+			la $a1, byte					#Pegando o carcter quer será armazenado temporáriamente
+			add $a2, $zero, 1				#Indicando que é um caracter por vez que será escrito
+			jal guardarEmArquivo				#Armazenando no arquivo temporário
+			add $a2, $zero, $t1				#Pegando o valor original de a2 (posição do objeto)
+			addi $a2, $a2, 1				#Incrementando o indice
+			add $v0, $zero, $t4				#Passando a posição do FD original
+			j processoRemocaoCliente				#Próxima iteração
 
+prepararParaRemoverCliente:addi $sp, $sp, -4				#Alocando espaço na pilha para não perder a posição do $a3 original
+			sw $a2, 0($sp)					#Guardando o valor de $a3 (pra evitar loop infinito)
+			sub $a2, $a2, $a2 				#Zerando a3 (Já chegou na posição do objeto)
+			add $a0, $zero, $s0				#Garantindo que só vou ler
+			j removerObjetoCliente				#Indo para a função de retirada do objeto
+
+removerObjetoCliente:	beq $a2, 64, rebobinarRemocaoCliente		#Se já tiver ignorado o objeto completamente, volta a armazenar o resto dos caracteres
+			add $t1, $zero, $a2				#Salvando temporariamente a quantidade de caracteres até a posição do objeto
+			la $a1, byte					#Informando onde os caracteres (ignorados) vão ficar
+			addi $a2, $zero, 1				#Informando que só vai ler 1 caracter
+			jal lerDoArquivo				#Lendo o caracter
+			add $a2, $zero, $t1				#Passando o valor original de a2
+			addi $a2, $a2, 1				#Incrementa a3
+			j removerObjetoCliente				#Proxima iteração
+
+removendoNoArquivoCliente:jal fecharArquivo		#Fecha o arquivo
+			add $a0, $zero, $s0		#Fechando o arquivo de leitura
+			jal fecharArquivo		#Fecha o outro arquivo
+			la $a0, arqClien		#Parâmetro com o nome do arquivo do cárdapio
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			la $a0, arqClien		#Reabrindo o arquivo, pra passar os dados dnv para ele
+			addi $a1, $zero, 9		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s0, $zero, $v0 		#Guardando o FD
+			la $a0, arqClien2		#Reabrindo o arquivo temporário, vamos lê-lo para passar pro original os dados
+			add $a1, $zero, $zero		#Especificando que quero escrever no arquivo (append)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			add $s1, $zero, $v0 		#Guardando o FD
+			j removerDadosAntigosCliente	#Iniciando função para guardar tudo de novo no arquivo
+
+removerDadosAntigosCliente:	beq $v0, 0, finalizarRemocaoCliente	#Se todos os caracteres foram lidos, então finaliza a edição
+				add $a0, $zero, $s1		#Alternando para o arquivo de leitura (temporario)
+				la $a1, cpfClienteGuardar	#Especificando que vou guardar o caracter lido aqui
+				add $a2, $zero, 1		#Especififcando que só um caracter será lido por vez
+				jal lerDoArquivo 		#Lendo rs
+				add $t0, $zero, $v0		#Guardando o valor de v0 temporáriamente
+				add $a0, $zero, $s0		#Alternando para o arquivo de escrita (o arquivo normal)
+				la $a1, cpfClienteGuardar	#Lendo o caracter que foi lido
+				addi $a2, $zero, 1		#Especificando que vai ser salvo 1 caracter
+				jal guardarEmArquivo		#Guardando cada caracter um por um
+				add $v0, $zero, $t0		#Pegando de volta o valor de t0
+				j removerDadosAntigosCliente	#Proxima iteração
+
+finalizarRemocaoCliente: jal fecharArquivo		#Fechando o arquivo de leitura
+			add $a0, $zero, $s1		#Alternando para o arquivo de escrita
+			jal fecharArquivo		#Fechando o arquivo de escrita
+			la $a0, arqClien2		#Parâmetro com o nome do arquivo do cárdapio (temporario)
+			addi $a1, $zero, 1		#Especificando que quero escrever no arquivo	(Para zerar tudo que tem nele)
+			addi $a2, $zero, 0 		#Não sei o que é mode
+			jal abrirArquivo		#Chamada da função de abrir arquivo
+			jal fecharArquivo		#Fechando o arquivo
+			j Main
+			
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#-------------------------------------------------Editar Cliente----------------------------------------------------------------------------------
+funcaoEditarCliente: 	la $a0, digiteCPFClienteBuscado		#Carrega a label do nome CPF do cliente buscado
+			la $a1, cpfClienteProucurado		#Carrega a label que vai armazenar o CPF do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteCPFCliente		#Carrega a label do CPF do cliente
+			la $a1, cpfCliente			#Carrega a label que vai armazenar o CPF do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digiteNomeCliente		#Carrega a label do nome do cliente
+			la $a1, nomeCliente			#Carrega a label que vai armazenar o nome do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			la $a0, digitePrefCliente		#Carrega a label do da preferencia do cliente
+			la $a1, prefCliente			#Carrega a label que vai armazenar a preferencia do cliente
+			addi $a2, $zero, 20			#Define a quantidade máxima de caracteres
+			jal chamarJanelaString			#Chama a função que mostra a tela para digitar uma string
+			add $a0, $zero, $v0			#Adicionando o que estava em v0 para a0
+			jal verificacaoString			#Verifica se está tudo ok com o que foi digitado
+
+			j buscaCliente
+
+#xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #===========================================================FIM DO CLIENTE=======================================================================
 
 #===========================================================FUNCIONARIO===============================================================================
@@ -895,7 +1192,6 @@ folhadePag: nop
 
 #xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #===========================================================FIM DO FUNCIONARIO=======================================================================
-
 #======================================================Classe pedidos===============================================================================
 #-------------------------------------------------Acao Pedidos----------------------------------------------------------------------------------
 acaoPedido:	beq $a2, 1, funcaoCadastrarPedido	#Chamada da função de cadastro de pedidos escolhida
